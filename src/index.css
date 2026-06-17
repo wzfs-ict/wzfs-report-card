@@ -617,3 +617,199 @@ body { font-family: 'Times New Roman', Times, serif; background: #f0f0f0; color:
 
   .rc-subject-table, .rc-attendance-table, .rc-p2-table { page-break-inside: avoid; }
 }
+
+/* ─── Meta Panel ─────────────────────────────────────────────────────────── */
+.meta-panel {
+  background: #fff;
+  border: 1.5px solid #dde2ec;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  font-family: Arial, sans-serif;
+}
+.meta-panel h3 { font-size: 0.88rem; font-weight: 700; color: #1a2e5e; margin-bottom: 0.75rem; }
+.meta-hint { font-size: 0.72rem; color: #999; font-weight: 400; margin-left: 8px; }
+.meta-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.meta-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; color: #555; }
+.meta-grid input {
+  border: 1px solid #d0d5e0;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  width: 160px;
+  font-family: Arial, sans-serif;
+}
+.meta-grid input:focus { outline: none; border-color: #1a2e5e; }
+
+/* ─── Preview Body (sidebar + card) ──────────────────────────────────────── */
+.preview-body {
+  display: flex;
+  gap: 0;
+  min-height: calc(100vh - 50px);
+}
+
+.edit-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: #f5f6fa;
+  border-right: 1px solid #dde2ec;
+  overflow-y: auto;
+  height: calc(100vh - 50px);
+  position: sticky;
+  top: 50px;
+}
+
+.print-area {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #888;
+  overflow-y: auto;
+}
+
+/* ─── Edit Panel ──────────────────────────────────────────────────────────── */
+.edit-panel { font-family: Arial, sans-serif; padding: 0; }
+
+.edit-student-name {
+  background: #1a2e5e;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-bottom: 1px solid #243f82;
+}
+
+.edit-tabs {
+  display: flex;
+  border-bottom: 2px solid #dde2ec;
+  background: #fff;
+}
+.edit-tab {
+  flex: 1;
+  padding: 7px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s;
+}
+.edit-tab:hover { color: #1a2e5e; }
+.edit-tab.active { color: #1a2e5e; border-bottom-color: #1a2e5e; }
+
+.edit-section { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+.edit-subsection-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1a2e5e;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #e0e3ec;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.72rem;
+  color: #666;
+}
+.edit-field input {
+  border: 1px solid #d0d5e0;
+  border-radius: 4px;
+  padding: 4px 7px;
+  font-size: 0.78rem;
+  font-family: Arial, sans-serif;
+  color: #111;
+}
+.edit-field input:focus { outline: none; border-color: #1a2e5e; background: #f7f9ff; }
+
+.edit-subject-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.subj-name {
+  flex: 1;
+  border: 1px solid #d0d5e0;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 0.74rem;
+  font-family: Arial, sans-serif;
+}
+.subj-score, .subj-beh {
+  width: 50px;
+  border: 1px solid #d0d5e0;
+  border-radius: 4px;
+  padding: 4px 4px;
+  font-size: 0.74rem;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+.subj-remove {
+  background: transparent;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.subj-remove:hover { background: #ffeaea; }
+
+.btn-add-subject {
+  background: transparent;
+  border: 1px dashed #1a2e5e;
+  color: #1a2e5e;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin-top: 2px;
+}
+.btn-add-subject:hover { background: #f0f4ff; }
+
+.edit-hint {
+  font-size: 0.72rem;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.comment-textarea {
+  width: 100%;
+  border: 1px solid #d0d5e0;
+  border-radius: 5px;
+  padding: 7px 9px;
+  font-size: 0.8rem;
+  font-family: Arial, sans-serif;
+  resize: vertical;
+  line-height: 1.5;
+  color: #111;
+}
+.comment-textarea:focus { outline: none; border-color: #1a2e5e; }
+.char-count { font-size: 0.68rem; color: #aaa; text-align: right; margin-top: 2px; }
+
+.edit-award-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.edit-award-row input {
+  flex: 1;
+  border: 1px solid #d0d5e0;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 0.74rem;
+  font-family: Arial, sans-serif;
+}
