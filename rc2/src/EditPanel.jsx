@@ -100,11 +100,15 @@ export default function EditPanel({ student, index, onChange }) {
         <div className="edit-section">
           <div className="edit-subsection-title">Certificates & Recognitions</div>
           {(student.certificates||[]).map((c,i)=>(
-            <div key={i} className="edit-award-row">
-              <input placeholder="Award / Event name" value={c.name} onChange={e=>setCert(i,"name",e.target.value)} />
-              <input placeholder="Type" style={{width:"100px"}} value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
-              <input placeholder="Date" style={{width:"72px"}} value={c.date} onChange={e=>setCert(i,"date",e.target.value)} />
-              <button className="subj-remove" onClick={()=>delCert(i)}>✕</button>
+            <div key={i} className="cert-card">
+              <div className="cert-card-row">
+                <input className="cert-name" placeholder="Award / Event name" value={c.name} onChange={e=>setCert(i,"name",e.target.value)} />
+                <button className="subj-remove" onClick={()=>delCert(i)} title="Remove">✕</button>
+              </div>
+              <div className="cert-card-row">
+                <input className="cert-type" placeholder="Type (e.g. Certificate)" value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
+                <input className="cert-date" placeholder="Date" value={c.date} onChange={e=>setCert(i,"date",e.target.value)} />
+              </div>
             </div>
           ))}
           <button className="btn-add-subject" onClick={addCert}>+ Add Certificate</button>

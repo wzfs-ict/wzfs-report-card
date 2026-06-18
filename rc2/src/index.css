@@ -132,9 +132,10 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-year-label { font-style: italic; font-size: 7pt; }
 .rc-year-value { font-size: 8.5pt; font-weight: 700; }
 .rc-year-rule { border-bottom: 1.5px dashed #999; margin-top: 1mm; width: 28mm; }
-.rc-header-school { flex: 1; padding-left: 5mm; font-size: 21pt; font-weight: 700; line-height: 1.15; color: #000; }
-.rc-header-logos { flex-shrink: 0; min-width: 24mm; text-align: right; }
-.rc-logo { height: 18mm; width: auto; object-fit: contain; }
+.rc-header-school { flex: 1; padding-left: 5mm; font-size: 17pt; font-weight: 700; line-height: 1.2; color: #000; letter-spacing: -0.01em; white-space: nowrap; display: flex; align-items: center; }
+.rc-header-logos { flex-shrink: 0; min-width: 30mm; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 2mm; }
+.rc-logo { height: 16mm; width: auto; object-fit: contain; }
+.rc-logo-wasc { height: 15mm; }
 
 .rc-rule { border: none; border-top: 1.5px solid #1a2e5e; margin: 2mm 0; }
 
@@ -276,3 +277,27 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 /* ── Signature image rendering inside report card ─────────────────────── */
 .rc-sig-line { position: relative; display: flex; align-items: flex-end; justify-content: center; }
 .rc-sig-img { max-height: 8mm; max-width: 50mm; object-fit: contain; margin-bottom: 0.5mm; }
+
+/* ── Comments box grows to fill available space ───────────────────────── */
+.rc-body-right { display: flex; flex-direction: column; }
+.rc-comments-grow { flex: 1; display: flex; flex-direction: column; }
+.rc-comments-grow .rc-comments-body { flex: 1; }
+
+/* ── Accreditation strip ───────────────────────────────────────────────── */
+.rc-accred-strip { text-align: center; font-size: 6.5pt; color: #1a2e5e; font-weight: 600; letter-spacing: 0.03em; margin-top: 2mm; text-transform: uppercase; }
+.rc-accred-dot { margin: 0 2mm; color: #c9a227; }
+
+/* ── Page 2 banner & quote ─────────────────────────────────────────────── */
+.rc-p2-banner { background: linear-gradient(135deg, #1a2e5e 0%, #243f82 100%); color: #fff; padding: 4mm 6mm; border-radius: 2mm; margin: 3mm 0 4mm; text-align: center; }
+.rc-p2-banner-title { font-size: 12pt; font-weight: 700; letter-spacing: 0.02em; }
+.rc-p2-banner-sub { font-size: 7.5pt; opacity: 0.85; margin-top: 1mm; font-style: italic; }
+.rc-p2-spacer { flex: 1; min-height: 8mm; }
+.rc-p2-quote { text-align: center; font-size: 9pt; font-style: italic; color: #888; padding: 6mm 12mm; line-height: 1.6; border-top: 0.5pt solid #e5e8f0; margin-top: 6mm; }
+.rc-p2-body { display: flex; flex-direction: column; flex: 1; }
+
+/* ── Certificate edit card (sidebar) ──────────────────────────────────── */
+.cert-card { border: 1px solid #e0e3ec; border-radius: 6px; padding: 6px; background: #fff; display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.cert-card-row { display: flex; gap: 4px; align-items: center; }
+.cert-name { flex: 1; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.74rem; font-family: Arial, sans-serif; }
+.cert-type { flex: 1; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.7rem; font-family: Arial, sans-serif; min-width: 0; }
+.cert-date { width: 78px; flex-shrink: 0; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.7rem; font-family: Arial, sans-serif; }

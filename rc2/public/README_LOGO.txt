@@ -1,9 +1,13 @@
 Place your school logo file here as: wzfs-logo.png
+Place the WASC accreditation seal here as: wasc-logo.png
 
 Recommended:
 - Transparent background PNG
-- Roughly square or slightly wide (e.g. 200x200px or 240x180px)
-- File must be named exactly: wzfs-logo.png
+- Roughly square (e.g. 200x200px)
+- File names must be exactly: wzfs-logo.png and wasc-logo.png
 
-The report card automatically displays it in the top-right corner of both pages.
-If this file is missing, the logo space will simply appear blank (no errors).
+Both appear side-by-side in the top-right corner of both report card pages.
+If a file is missing, that logo spot simply appears blank (no errors).
+
+You can find an official WASC seal image from the WASC website
+(acswasc.org) or your school's existing accreditation certificate.

@@ -38,9 +38,10 @@ function RCHeader({ schoolYear }) {
           <div className="rc-year-rule"/>
         </div>
       </div>
-      <div className="rc-header-school">WEIHAI ZHONGSHI<br/>FOREIGN SCHOOL</div>
+      <div className="rc-header-school">WEIHAI ZHONGSHI FOREIGN SCHOOL</div>
       <div className="rc-header-logos">
         <img src="./wzfs-logo.png" alt="WZFS Logo" className="rc-logo" onError={e=>{e.target.style.display="none";}}/>
+        <img src="./wasc-logo.png" alt="WASC Accreditation" className="rc-logo rc-logo-wasc" onError={e=>{e.target.style.display="none";}}/>
       </div>
     </div>
   );
@@ -116,10 +117,33 @@ function RCFooterNotes() {
   );
 }
 
+function AccreditationStrip() {
+  return (
+    <div className="rc-accred-strip">
+      <span>WASC Accredited</span><span className="rc-accred-dot">•</span>
+      <span>Western Association of Schools and Colleges</span>
+    </div>
+  );
+}
+
+function normalizeName(name) {
+  return String(name||"").toLowerCase().replace(/[.\s]+/g,"").trim();
+}
+
+function findSignature(signatures, name) {
+  if (!signatures || !name) return null;
+  // Exact match first
+  if (signatures[name]) return signatures[name];
+  // Fuzzy match: ignore periods, spacing, case
+  const target = normalizeName(name);
+  const key = Object.keys(signatures).find(k => normalizeName(k) === target);
+  return key ? signatures[key] : null;
+}
+
 function RCSignatures({ student, signatures }) {
-  const advisorSig = signatures?.[student.advisor];
+  const advisorSig = findSignature(signatures, student.advisor);
   const principalName = student.principal || "Mr. Arsenio Sumeg-ang";
-  const principalSig = signatures?.[principalName];
+  const principalSig = findSignature(signatures, principalName);
 
   return (
     <div className="rc-sigs">
@@ -168,7 +192,7 @@ function Page1({ student, signatures }) {
         </div>
         <div className="rc-body-right">
           <AttendanceTable att={student.attendance}/>
-          <div className="rc-comments-box">
+          <div className="rc-comments-box rc-comments-grow">
             <div className="rc-comments-hdr">Teacher's Comments and Feedback</div>
             <p className="rc-comments-body">{student.homeroomComment||""}</p>
           </div>
@@ -176,6 +200,7 @@ function Page1({ student, signatures }) {
       </div>
       <RCSignatures student={student} signatures={signatures}/>
       <div className="rc-rule"/>
+      <AccreditationStrip/>
       <RCAddress pageNum="1"/>
     </div>
   );
@@ -184,12 +209,19 @@ function Page1({ student, signatures }) {
 function Page2({ student, signatures }) {
   const sp = student.servicePoints||[];
   const certs = student.certificates||[];
+  const totalPoints = sp.reduce((a,b)=>a+(b.points||0),0);
   return (
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <RCStudentInfo student={student}/>
       <div className="rc-rule"/>
+
+      <div className="rc-p2-banner">
+        <div className="rc-p2-banner-title">Achievements &amp; Recognition</div>
+        <div className="rc-p2-banner-sub">Service Points and Certificates earned during {student.gradingPeriod||"this grading period"}</div>
+      </div>
+
       <div className="rc-p2-body">
         <div className="rc-p2-section-title">Service Points</div>
         {sp.length > 0 ? (
@@ -197,21 +229,28 @@ function Page2({ student, signatures }) {
             <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
             <tbody>
               {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{sp.reduce((a,b)=>a+(b.points||0),0)}</strong></td></tr>
+              <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
             </tbody>
           </table>
         ) : <div className="rc-p2-placeholder">S &nbsp; e &nbsp; r &nbsp; v &nbsp; i &nbsp; c &nbsp; e &nbsp;&nbsp; P &nbsp; o &nbsp; i &nbsp; n &nbsp; t &nbsp; s</div>}
 
-        <div className="rc-p2-section-title" style={{marginTop:"6mm"}}>Certificates</div>
+        <div className="rc-p2-section-title" style={{marginTop:"8mm"}}>Certificates</div>
         {certs.length > 0 ? (
           <table className="rc-p2-table">
             <thead><tr><th>Certificate / Award</th><th>Type</th><th>Date</th></tr></thead>
             <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td><td>{c.date}</td></tr>)}</tbody>
           </table>
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
+
+        <div className="rc-p2-spacer"/>
+        <div className="rc-p2-quote">
+          "Excellence is not a destination; it is a continuous journey that never ends."
+        </div>
       </div>
+
       <RCSignatures student={student} signatures={signatures}/>
       <div className="rc-rule"/>
+      <AccreditationStrip/>
       <RCAddress pageNum="2"/>
     </div>
   );
