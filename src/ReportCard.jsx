@@ -40,7 +40,7 @@ function RCHeader({ schoolYear }) {
       </div>
       <div className="rc-header-school">WEIHAI ZHONGSHI<br/>FOREIGN SCHOOL</div>
       <div className="rc-header-logos">
-        <img src="/wzfs-logo.png" alt="" className="rc-logo" onError={e=>e.target.style.display="none"}/>
+        <img src="./wzfs-logo.png" alt="WZFS Logo" className="rc-logo" onError={e=>{e.target.style.display="none";}}/>
       </div>
     </div>
   );
@@ -116,18 +116,26 @@ function RCFooterNotes() {
   );
 }
 
-function RCSignatures() {
+function RCSignatures({ student, signatures }) {
+  const advisorSig = signatures?.[student.advisor];
+  const principalName = student.principal || "Mr. Arsenio Sumeg-ang";
+  const principalSig = signatures?.[principalName];
+
   return (
     <div className="rc-sigs">
       <div className="rc-sig-block">
-        <div className="rc-sig-line"/>
+        <div className="rc-sig-line">
+          {advisorSig && <img src={advisorSig} alt="" className="rc-sig-img" />}
+        </div>
         <p className="rc-sig-role">Class Advisor Signature:</p>
-        <p className="rc-sig-name">Mr. Glen Joshua</p>
+        <p className="rc-sig-name">{student.advisor}</p>
       </div>
       <div className="rc-sig-block">
-        <div className="rc-sig-line"/>
+        <div className="rc-sig-line">
+          {principalSig && <img src={principalSig} alt="" className="rc-sig-img" />}
+        </div>
         <p className="rc-sig-role">School Principal Signature:</p>
-        <p className="rc-sig-name">Mr. Arsenio Sumeg-ang</p>
+        <p className="rc-sig-name">{principalName}</p>
       </div>
     </div>
   );
@@ -145,7 +153,7 @@ function RCAddress({ pageNum }) {
   );
 }
 
-function Page1({ student }) {
+function Page1({ student, signatures }) {
   return (
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
@@ -166,14 +174,14 @@ function Page1({ student }) {
           </div>
         </div>
       </div>
-      <RCSignatures/>
+      <RCSignatures student={student} signatures={signatures}/>
       <div className="rc-rule"/>
       <RCAddress pageNum="1"/>
     </div>
   );
 }
 
-function Page2({ student }) {
+function Page2({ student, signatures }) {
   const sp = student.servicePoints||[];
   const certs = student.certificates||[];
   return (
@@ -202,19 +210,19 @@ function Page2({ student }) {
           </table>
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
       </div>
-      <RCSignatures/>
+      <RCSignatures student={student} signatures={signatures}/>
       <div className="rc-rule"/>
       <RCAddress pageNum="2"/>
     </div>
   );
 }
 
-export default function ReportCard({ student }) {
+export default function ReportCard({ student, signatures }) {
   return (
     <div className="rc-wrapper">
-      <Page1 student={student}/>
+      <Page1 student={student} signatures={signatures}/>
       <div className="rc-page-break"/>
-      <Page2 student={student}/>
+      <Page2 student={student} signatures={signatures}/>
     </div>
   );
 }

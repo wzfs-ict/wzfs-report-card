@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
 import ReportCard from "./ReportCard";
 import UploadPanel from "./UploadPanel";
 import StudentNav from "./StudentNav";
 import MetaPanel from "./MetaPanel";
 import EditPanel from "./EditPanel";
+import SignatureManager, { loadSignatures } from "./SignatureManager";
 import { parseMarksData, parseAwardsData, mergeStudentData } from "./dataParser";
 
 export default function App() {
@@ -14,10 +15,19 @@ export default function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [step, setStep] = useState("upload");
   const [errors, setErrors] = useState([]);
+  const [showSigManager, setShowSigManager] = useState(false);
+  const [signatures, setSignatures] = useState({});
   const [meta, setMeta] = useState({
-    grade: "", advisor: "Mr. Glen Joshua",
+    grade: "", advisor: "Mr. Glen Joshua", principal: "Mr. Arsenio Sumeg-ang",
     department: "Middle School", gradingPeriod: "Spring Semester", schoolYear: "2025–2026",
   });
+
+  useEffect(() => { setSignatures(loadSignatures()); }, []);
+
+  const refreshSignatures = useCallback(() => {
+    setSignatures(loadSignatures());
+    setShowSigManager(false);
+  }, []);
 
   const readFile = useCallback((file, onData) => {
     const reader = new FileReader();
@@ -32,6 +42,25 @@ export default function App() {
     reader.readAsArrayBuffer(file);
   }, []);
 
+  // Awards workbooks often have one tab per event/competition — read ALL sheets and combine
+  const readAwardsFile = useCallback((file, onData) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: "array" });
+        let combined = [];
+        for (const sheetName of wb.SheetNames) {
+          const ws = wb.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+          combined = combined.concat(rows);
+        }
+        onData(combined);
+        setErrors([]);
+      } catch { setErrors(["Could not read awards file — please check the format."]); }
+    };
+    reader.readAsArrayBuffer(file);
+  }, []);
+
   const handleGenerate = () => {
     if (!marksRaw) { setErrors(["Please upload the marks file first."]); return; }
     try {
@@ -41,6 +70,7 @@ export default function App() {
         ...s,
         grade: s.grade || meta.grade,
         advisor: s.advisor || meta.advisor,
+        principal: s.principal || meta.principal,
         department: s.department || meta.department,
         gradingPeriod: s.gradingPeriod || meta.gradingPeriod,
         schoolYear: meta.schoolYear,
@@ -68,6 +98,7 @@ export default function App() {
             <StudentNav students={students} selectedIndex={selectedIndex} onSelect={setSelectedIndex}/>
           </div>
           <div className="tr">
+            <button className="btn-sig" onClick={()=>setShowSigManager(true)}>✍ Signatures</button>
             <button className="btn-print" onClick={()=>window.print()}>🖨 Print / Save PDF</button>
           </div>
         </div>
@@ -78,11 +109,12 @@ export default function App() {
           <div className="print-area">
             {students.map((s,i)=>(
               <div key={i} className={i===selectedIndex?"active-student":"hidden-student"}>
-                <ReportCard student={s}/>
+                <ReportCard student={s} signatures={signatures}/>
               </div>
             ))}
           </div>
         </div>
+        {showSigManager && <SignatureManager onClose={refreshSignatures}/>}
       </div>
     );
   }
@@ -95,12 +127,15 @@ export default function App() {
         <p className="header-sub">Upload · Edit · Print</p>
       </header>
       <main className="upload-main">
+        <div className="upload-toolbar-row">
+          <button className="btn-sig-outline" onClick={()=>setShowSigManager(true)}>✍ Manage Teacher & Principal Signatures</button>
+        </div>
         <MetaPanel values={meta} onChange={setMeta}/>
         <div className="upload-grid">
           <UploadPanel title="Marks File" description="CSV or Excel — one row per student" icon="📋"
             onUpload={f=>readFile(f,setMarksRaw)} uploaded={!!marksRaw} rowCount={marksRaw?.length} required/>
-          <UploadPanel title="Awards File" description="Spring_2026_Awards.xlsx format" icon="🏆"
-            onUpload={f=>readFile(f,setAwardsRaw)} uploaded={!!awardsRaw} rowCount={awardsRaw?.length} required={false}/>
+          <UploadPanel title="Awards File" description="Reads every tab — Sports, Chinese, UNESCO, etc." icon="🏆"
+            onUpload={f=>readAwardsFile(f,setAwardsRaw)} uploaded={!!awardsRaw} rowCount={awardsRaw?.length} required={false}/>
         </div>
         {errors.length>0 && <div className="error-box">{errors.map((e,i)=><p key={i}>⚠ {e}</p>)}</div>}
         <div className="generate-area">
@@ -118,19 +153,21 @@ export default function App() {
               <p style={{marginTop:"8px"}}>Academic subjects → Subject I. PE, Drama, Electives, Orchestra, Debate → Subject II (auto-detected).</p>
             </div>
             <div>
-              <h4>Awards file (your Spring_2026_Awards.xlsx)</h4>
-              <table><thead><tr><th>Column</th><th>Example</th></tr></thead>
+              <h4>Awards file — multiple tabs supported</h4>
+              <p>Every sheet/tab in the workbook is read automatically (Sports, Chinese Contests, UNESCO, Math Kangaroo, etc.) Column names can vary slightly between tabs — the app recognizes common variants:</p>
+              <table><thead><tr><th>Looks for</th><th>Accepts</th></tr></thead>
               <tbody>
-                <tr><td>Grade</td><td>7</td></tr>
-                <tr><td>Name of Student</td><td>Joseph</td></tr>
-                <tr><td>Event</td><td>YEASA Football Tournament</td></tr>
-                <tr><td>Recognition</td><td>Certificate of Recognition</td></tr>
+                <tr><td>Name</td><td>Name, Name of Student, Name of student</td></tr>
+                <tr><td>Award title</td><td>Event, Award, Certificate</td></tr>
+                <tr><td>Type</td><td>Recognition, Category, Remark</td></tr>
+                <tr><td>Grade</td><td>Grade (used to avoid mismatches for common first names)</td></tr>
               </tbody></table>
             </div>
           </div>
         </div>
       </main>
       <footer className="app-footer">WZFS ICT Department · Report Card Generator · 2025–2026</footer>
+      {showSigManager && <SignatureManager onClose={refreshSignatures}/>}
     </div>
   );
 }

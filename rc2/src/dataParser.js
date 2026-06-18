@@ -152,25 +152,60 @@ export function parseAwardsData(rows) {
   if (!rows || rows.length===0) return {};
   const map = {};
   for (const row of rows) {
-    const name = v(row,"nameofstudent","studentname","name");
+    // Name: "Name of Student", "Name of student", "Name"
+    const name = v(row,"nameofstudent","name");
     if (!name) continue;
     const key = name.trim();
     if (!map[key]) map[key] = [];
+
+    // Event/Award title: "Event", "Award", "Certificate", or the long Chinese Vocab header
+    let awardName = v(row,"event","award","certificate");
+    if (!awardName) {
+      // Chinese Vocab Competition sheet has the award title AS the 4th header itself
+      const keys = Object.keys(row);
+      const fallbackCol = keys.find(k => /winner|list|award|certificate/i.test(k) && k.toLowerCase()!=="grade");
+      if (fallbackCol) awardName = String(row[fallbackCol]||"").trim();
+    }
+
+    // Recognition/Category/Remark = the type of award (usually "Certificate of Recognition")
+    const recognition = v(row,"recognition","category","remark") || "Certificate of Recognition";
+
+    const grade = v(row,"grade");
+    const points = v(row,"points","servicepoints");
+
+    if (!awardName) continue; // skip fully blank rows
+
     map[key].push({
-      type: v(row,"recognition","awardtype","certificate") || "Certificate",
-      name: v(row,"event","awardname","award"),
-      points: v(row,"points","servicepoints"),
+      type: recognition,
+      name: awardName,
+      points,
       date: v(row,"date"),
+      grade,
     });
   }
   return map;
 }
 
+function normGrade(g) {
+  // "6", "G6", "Grade 6" all become "6"
+  return String(g||"").replace(/[^\d]/g,"").trim();
+}
+
 export function mergeStudentData(students, awardsMap) {
   return students.map(s => {
-    // Try nick name, first name, full name
     const firstName = s.name.split(" ")[0];
-    const awards = awardsMap[s.nickName] || awardsMap[s.name] || awardsMap[firstName] || [];
+    const studentGrade = normGrade(s.grade);
+
+    // Try nick name, full name, first name (in that priority)
+    let awards = awardsMap[s.nickName] || awardsMap[s.name] || awardsMap[firstName] || [];
+
+    // If matched by first name only (ambiguous), filter to same grade if grade info exists on the award
+    if (!awardsMap[s.nickName] && !awardsMap[s.name] && awardsMap[firstName] && studentGrade) {
+      const gradeFiltered = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
+      // Only apply filter if it doesn't wipe out everything (in case grade data is missing/inconsistent)
+      if (gradeFiltered.length > 0) awards = gradeFiltered;
+    }
+
     return {
       ...s,
       certificates: awards.filter(a => !a.points || a.points===""),

@@ -1,6 +1,6 @@
 {
   "name": "wzfs-report-card",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,5 @@
     "xlsx": "^0.18.5",
     "@vitejs/plugin-react": "^4.3.1",
     "vite": "^5.3.1"
-  },
-  "devDependencies": {}
+  }
 }

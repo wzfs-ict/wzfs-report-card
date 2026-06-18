@@ -79,7 +79,7 @@ export default function EditPanel({ student, index, onChange }) {
       {tab==="info" && (
         <div className="edit-section">
           {[["name","Full Name"],["nickName","Called Name"],["dob","Date of Birth (mm/dd/yyyy)"],
-            ["grade","Grade"],["advisor","Advisor"],["department","Department"],["gradingPeriod","Grading Period"]
+            ["grade","Grade"],["advisor","Advisor"],["principal","Principal"],["department","Department"],["gradingPeriod","Grading Period"]
           ].map(([k,l])=>(
             <label key={k} className="edit-field"><span>{l}</span>
               <input value={student[k]||""} onChange={e=>set(k,e.target.value)} />

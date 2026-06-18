@@ -7,6 +7,7 @@ export default function MetaPanel({ values, onChange }) {
         {[
           ["grade","Grade","G7"],
           ["advisor","Class Advisor","Mr. Glen Joshua"],
+          ["principal","Principal","Mr. Arsenio Sumeg-ang"],
           ["department","Department","Middle School"],
           ["gradingPeriod","Grading Period","Spring Semester"],
           ["schoolYear","School Year","2025–2026"],
