@@ -29,13 +29,76 @@ export default function App() {
     setShowSigManager(false);
   }, []);
 
+  // Detects and merges two-row headers: row of subject-group titles (often merged cells)
+  // sitting above a row of Score/Behaviour sub-headers. Produces compound keys like
+  // "English Lang_Score" so dataParser.js can match them. Falls back to normal single-row
+  // parsing if no such pattern is found.
+  const parseWithMergedHeaders = (sheet) => {
+    const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false });
+    const idPatterns = /student.?id|full.?name|student.?name|^name$|^id$/i;
+    const subPatterns = /^score$|^behaviour$|^behavior$/i;
+
+    // Find the row containing Score/Behaviour sub-headers
+    let subRowIdx = -1;
+    for (let i = 0; i < Math.min(5, raw.length); i++) {
+      const row = raw[i] || [];
+      const subCount = row.filter(cell => subPatterns.test(String(cell).trim())).length;
+      if (subCount >= 2) { subRowIdx = i; break; }
+    }
+
+    // No merged-header pattern found — fall back to standard single-row parsing
+    if (subRowIdx === -1) {
+      const headerRow = (() => {
+        for (let i = 0; i < Math.min(5, raw.length); i++) {
+          const row = raw[i] || [];
+          const matchCount = row.filter(cell => idPatterns.test(String(cell).trim())).length;
+          if (matchCount >= 2) return i;
+        }
+        return 0;
+      })();
+      return XLSX.utils.sheet_to_json(sheet, { defval: "", range: headerRow });
+    }
+
+    // Merged-header pattern found: row [subRowIdx - 1] holds subject group titles
+    // (sparse — only set on the first column of each merged pair), row [subRowIdx]
+    // holds Score/Behaviour, and fixed columns (Student_ID etc.) live in subRowIdx too.
+    const groupRow = raw[subRowIdx - 1] || [];
+    const subRow = raw[subRowIdx] || [];
+
+    const compoundHeaders = [];
+    let lastGroup = "";
+    for (let c = 0; c < subRow.length; c++) {
+      const subLabel = String(subRow[c] || "").trim();
+      const groupLabel = String(groupRow[c] || "").trim();
+      if (groupLabel) lastGroup = groupLabel; // merged cells only populate the first column
+      if (subPatterns.test(subLabel)) {
+        // e.g. "English Lang_Score" / "English Lang_Behaviour"
+        const normalized = /behavior/i.test(subLabel) ? "Behaviour" : subLabel;
+        compoundHeaders.push(`${lastGroup}_${normalized}`);
+      } else {
+        // Fixed column like Student_ID, Full_Name, Called_Name, Class Tutor Comment
+        compoundHeaders.push(subLabel || `Col${c}`);
+      }
+    }
+
+    const dataRows = raw.slice(subRowIdx + 1);
+    return dataRows
+      .filter(row => row.some(cell => String(cell).trim() !== ""))
+      .map(row => {
+        const obj = {};
+        compoundHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ""; });
+        return obj;
+      });
+  };
+
   const readFile = useCallback((file, onData) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const wb = XLSX.read(e.target.result, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        onData(XLSX.utils.sheet_to_json(ws, { defval: "" }));
+        const rows = parseWithMergedHeaders(ws);
+        onData(rows);
         setErrors([]);
       } catch { setErrors(["Could not read file — please check the format."]); }
     };
@@ -51,7 +114,7 @@ export default function App() {
         let combined = [];
         for (const sheetName of wb.SheetNames) {
           const ws = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+          const rows = parseWithMergedHeaders(ws);
           combined = combined.concat(rows);
         }
         onData(combined);

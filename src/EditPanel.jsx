@@ -134,8 +134,7 @@ export default function EditPanel({ student, index, onChange }) {
                 <button className="subj-remove" onClick={()=>delCert(i)} title="Remove">✕</button>
               </div>
               <div className="cert-card-row">
-                <input className="cert-type" placeholder="Type (e.g. Certificate)" value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
-                <input className="cert-date" placeholder="Date" value={c.date} onChange={e=>setCert(i,"date",e.target.value)} />
+                <input className="cert-type-full" placeholder="Type (e.g. Certificate)" value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
               </div>
             </div>
           ))}
