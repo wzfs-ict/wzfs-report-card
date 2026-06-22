@@ -53,7 +53,7 @@ function RCHeader({ schoolYear }) {
       </div>
       <div className="rc-header-school">
         <div className="rc-school-en">WEIHAI ZHONGSHI FOREIGN SCHOOL</div>
-        <div className="rc-school-zh">威海中世外国语学校</div>
+        <div className="rc-school-zh">威海中世外籍人员子女学校</div>
       </div>
       <div className="rc-header-logos">
         <img src="./wzfs-logo.png" alt="WZFS Logo" className="rc-logo" onError={e=>{e.target.style.display="none";}}/>
@@ -239,18 +239,20 @@ function Page2({ student, signatures }) {
       </div>
 
       <div className="rc-p2-body">
-        <div className="rc-p2-section-title">Service Points</div>
-        {sp.length > 0 ? (
-          <table className="rc-p2-table">
-            <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-            <tbody>
-              {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
-            </tbody>
-          </table>
-        ) : <div className="rc-p2-placeholder">S &nbsp; e &nbsp; r &nbsp; v &nbsp; i &nbsp; c &nbsp; e &nbsp;&nbsp; P &nbsp; o &nbsp; i &nbsp; n &nbsp; t &nbsp; s</div>}
+        {sp.length > 0 && (
+          <>
+            <div className="rc-p2-section-title">Service Points</div>
+            <table className="rc-p2-table">
+              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+              <tbody>
+                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
+                <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
 
-        <div className="rc-p2-section-title" style={{marginTop:"8mm"}}>Certificates</div>
+        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "8mm" : "0"}}>Certificates</div>
         {certs.length > 0 ? (
           <table className="rc-p2-table">
             <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
