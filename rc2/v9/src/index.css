@@ -301,5 +301,4 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .cert-card { border: 1px solid #e0e3ec; border-radius: 6px; padding: 6px; background: #fff; display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
 .cert-card-row { display: flex; gap: 4px; align-items: center; }
 .cert-name { flex: 1; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.74rem; font-family: Arial, sans-serif; }
-.cert-type { flex: 1; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.7rem; font-family: Arial, sans-serif; min-width: 0; }
-.cert-date { width: 78px; flex-shrink: 0; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.7rem; font-family: Arial, sans-serif; }
+.cert-type-full { width: 100%; border: 1px solid #d0d5e0; border-radius: 4px; padding: 4px 6px; font-size: 0.7rem; font-family: Arial, sans-serif; }

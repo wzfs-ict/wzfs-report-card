@@ -1,5 +1,24 @@
 import { useState } from "react";
 
+// Convert "mm/dd/yyyy" -> "yyyy-mm-dd" for the HTML date input
+function toInputDate(mmddyyyy) {
+  if (!mmddyyyy) return "";
+  const parts = String(mmddyyyy).split("/");
+  if (parts.length !== 3) return "";
+  const [mm, dd, yyyy] = parts;
+  if (!mm || !dd || !yyyy) return "";
+  return `${yyyy.padStart(4,"0")}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
+
+// Convert "yyyy-mm-dd" (from date input) -> "mm/dd/yyyy" for display/storage
+function fromInputDate(yyyymmdd) {
+  if (!yyyymmdd) return "";
+  const parts = yyyymmdd.split("-");
+  if (parts.length !== 3) return "";
+  const [yyyy, mm, dd] = parts;
+  return `${mm}/${dd}/${yyyy}`;
+}
+
 export default function EditPanel({ student, index, onChange }) {
   const [tab, setTab] = useState("comment");
   const set = (key, val) => onChange(index, { [key]: val });
@@ -78,8 +97,17 @@ export default function EditPanel({ student, index, onChange }) {
 
       {tab==="info" && (
         <div className="edit-section">
-          {[["name","Full Name"],["nickName","Called Name"],["dob","Date of Birth (mm/dd/yyyy)"],
-            ["grade","Grade"],["advisor","Advisor"],["principal","Principal"],["department","Department"],["gradingPeriod","Grading Period"]
+          {[["name","Full Name"],["nickName","Called Name"]
+          ].map(([k,l])=>(
+            <label key={k} className="edit-field"><span>{l}</span>
+              <input value={student[k]||""} onChange={e=>set(k,e.target.value)} />
+            </label>
+          ))}
+          <label className="edit-field">
+            <span>Date of Birth</span>
+            <input type="date" value={toInputDate(student.dob)} onChange={e=>set("dob", fromInputDate(e.target.value))} />
+          </label>
+          {[["grade","Grade"],["advisor","Advisor"],["principal","Principal"],["department","Department"],["gradingPeriod","Grading Period"]
           ].map(([k,l])=>(
             <label key={k} className="edit-field"><span>{l}</span>
               <input value={student[k]||""} onChange={e=>set(k,e.target.value)} />
@@ -106,8 +134,7 @@ export default function EditPanel({ student, index, onChange }) {
                 <button className="subj-remove" onClick={()=>delCert(i)} title="Remove">✕</button>
               </div>
               <div className="cert-card-row">
-                <input className="cert-type" placeholder="Type (e.g. Certificate)" value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
-                <input className="cert-date" placeholder="Date" value={c.date} onChange={e=>setCert(i,"date",e.target.value)} />
+                <input className="cert-type-full" placeholder="Type (e.g. Certificate)" value={c.type} onChange={e=>setCert(i,"type",e.target.value)} />
               </div>
             </div>
           ))}

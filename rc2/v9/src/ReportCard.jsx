@@ -1,3 +1,16 @@
+// Converts "mm/dd/yyyy" -> Chinese date format "yyyy年m月d日"
+function toChineseDate(mmddyyyy) {
+  if (!mmddyyyy) return "";
+  const parts = String(mmddyyyy).split("/");
+  if (parts.length !== 3) return mmddyyyy; // fallback: show as-is if format unexpected
+  const [mm, dd, yyyy] = parts;
+  const m = parseInt(mm, 10);
+  const d = parseInt(dd, 10);
+  const y = parseInt(yyyy, 10);
+  if (!m || !d || !y) return mmddyyyy;
+  return `${y}年${m}月${d}日`;
+}
+
 function SubjectTable({ title, subjects }) {
   const rows = [...(subjects||[])];
   return (
@@ -67,8 +80,8 @@ function RCStudentInfo({ student }) {
       <div className="rc-info-row">
         <div className="rc-info-cell wide">
           <span className="rc-lbl">Date of Birth</span><span className="rc-sep">:</span>
-          <span className="rc-val">{student.dob}</span>
-          <span className="rc-sublbl">mm/dd/yyyy</span>
+          <span className="rc-val">{toChineseDate(student.dob)}</span>
+          <span className="rc-sublbl">出生日期 (yyyy年m月d日)</span>
         </div>
         <div className="rc-info-cell">
           <span className="rc-lbl">Advisor</span><span className="rc-sep">:</span>
@@ -240,14 +253,14 @@ function Page2({ student, signatures }) {
         <div className="rc-p2-section-title" style={{marginTop:"8mm"}}>Certificates</div>
         {certs.length > 0 ? (
           <table className="rc-p2-table">
-            <thead><tr><th>Certificate / Award</th><th>Type</th><th>Date</th></tr></thead>
-            <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td><td>{c.date}</td></tr>)}</tbody>
+            <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
+            <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
           </table>
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
 
         <div className="rc-p2-spacer"/>
         <div className="rc-p2-quote">
-          "Excellence is not a destination; it is a continuous journey that never ends."
+          "Use better Grades to build better Character."
         </div>
       </div>
 
