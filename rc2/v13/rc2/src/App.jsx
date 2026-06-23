@@ -149,6 +149,26 @@ export default function App() {
     setStudents(prev => { const n=[...prev]; n[index]={...n[index],...updates}; return n; });
   }, []);
 
+  // Total School Days is the one attendance figure shared by an entire class —
+  // when a teacher edits it for one student, sync it to every student in this upload.
+  const updateAttendanceTotalDays = useCallback((value) => {
+    setStudents(prev => prev.map(s => ({
+      ...s,
+      attendance: { ...(s.attendance || {}), totalDays: value },
+    })));
+  }, []);
+
+  // Renames a subject across every student in the class — fixes typos/inconsistent
+  // naming made by different subject teachers, applied only when explicitly confirmed.
+  const renameSubjectClassWide = useCallback((subjectType, oldName, newName) => {
+    if (!newName || newName === oldName) return;
+    setStudents(prev => prev.map(s => {
+      const key = subjectType === "I" ? "subjectsI" : "subjectsII";
+      const list = (s[key] || []).map(sub => sub.name === oldName ? { ...sub, name: newName } : sub);
+      return { ...s, [key]: list };
+    }));
+  }, []);
+
   if (step === "preview") {
     return (
       <div className="app-preview">
@@ -167,7 +187,13 @@ export default function App() {
         </div>
         <div className="preview-body">
           <div className="edit-sidebar no-print">
-            <EditPanel student={students[selectedIndex]} index={selectedIndex} onChange={updateStudent}/>
+            <EditPanel
+              student={students[selectedIndex]}
+              index={selectedIndex}
+              onChange={updateStudent}
+              onTotalDaysSync={updateAttendanceTotalDays}
+              onRenameSubjectClassWide={renameSubjectClassWide}
+            />
           </div>
           <div className="print-area">
             {students.map((s,i)=>(

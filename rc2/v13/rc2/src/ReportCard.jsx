@@ -11,10 +11,10 @@ function toChineseDate(mmddyyyy) {
   return `${y}年${m}月${d}日`;
 }
 
-function SubjectTable({ title, subjects }) {
+function SubjectTable({ title, subjects, rowScale }) {
   const rows = [...(subjects||[])];
   return (
-    <table className="rc-subject-table">
+    <table className="rc-subject-table" style={{ "--row-scale": rowScale }}>
       <thead>
         <tr>
           <th className="rc-th-subject">{title}</th>
@@ -33,11 +33,20 @@ function SubjectTable({ title, subjects }) {
         <tr className="rc-row-terminator">
           <td colSpan={3} className="rc-cell-terminator">xx nothing follows &nbsp;&nbsp; xx</td>
         </tr>
-        <tr className="rc-row-empty"><td colSpan={3}>&nbsp;</td></tr>
-        <tr className="rc-row-empty"><td colSpan={3}>&nbsp;</td></tr>
       </tbody>
     </table>
   );
+}
+
+// Determines how much to scale up row height + font size when a student has
+// very few subjects, so the table fills the page nicely instead of leaving
+// a large empty gap. Caps out for students with many subjects (no shrinking
+// below the normal compact size — only ever scales UP for sparse data).
+function getRowScale(totalSubjects) {
+  if (totalSubjects <= 6) return 1.6;
+  if (totalSubjects <= 9) return 1.3;
+  if (totalSubjects <= 12) return 1.1;
+  return 1; // 13+ subjects: standard compact size, as before
 }
 
 function RCHeader({ schoolYear }) {
@@ -53,7 +62,7 @@ function RCHeader({ schoolYear }) {
       </div>
       <div className="rc-header-school">
         <div className="rc-school-en">WEIHAI ZHONGSHI FOREIGN SCHOOL</div>
-        <div className="rc-school-zh">威海中世外国语学校</div>
+        <div className="rc-school-zh">威海中世外籍人员子女学校</div>
       </div>
       <div className="rc-header-logos">
         <img src="./wzfs-logo.png" alt="WZFS Logo" className="rc-logo" onError={e=>{e.target.style.display="none";}}/>
@@ -194,6 +203,8 @@ function RCAddress({ pageNum }) {
 }
 
 function Page1({ student, signatures }) {
+  const totalSubjects = (student.subjectsI?.length||0) + (student.subjectsII?.length||0);
+  const rowScale = getRowScale(totalSubjects);
   return (
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
@@ -202,8 +213,8 @@ function Page1({ student, signatures }) {
       <div className="rc-rule"/>
       <div className="rc-body">
         <div className="rc-body-left">
-          <SubjectTable title="Subject I" subjects={student.subjectsI}/>
-          <SubjectTable title="Subject II" subjects={student.subjectsII}/>
+          <SubjectTable title="Subject I" subjects={student.subjectsI} rowScale={rowScale}/>
+          <SubjectTable title="Subject II" subjects={student.subjectsII} rowScale={rowScale}/>
           <RCFooterNotes/>
         </div>
         <div className="rc-body-right">
@@ -239,18 +250,20 @@ function Page2({ student, signatures }) {
       </div>
 
       <div className="rc-p2-body">
-        <div className="rc-p2-section-title">Service Points</div>
-        {sp.length > 0 ? (
-          <table className="rc-p2-table">
-            <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-            <tbody>
-              {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
-            </tbody>
-          </table>
-        ) : <div className="rc-p2-placeholder">S &nbsp; e &nbsp; r &nbsp; v &nbsp; i &nbsp; c &nbsp; e &nbsp;&nbsp; P &nbsp; o &nbsp; i &nbsp; n &nbsp; t &nbsp; s</div>}
+        {sp.length > 0 && (
+          <>
+            <div className="rc-p2-section-title">Service Points</div>
+            <table className="rc-p2-table">
+              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+              <tbody>
+                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
+                <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
 
-        <div className="rc-p2-section-title" style={{marginTop:"8mm"}}>Certificates</div>
+        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "8mm" : "0"}}>Certificates</div>
         {certs.length > 0 ? (
           <table className="rc-p2-table">
             <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>

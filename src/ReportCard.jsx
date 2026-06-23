@@ -11,10 +11,10 @@ function toChineseDate(mmddyyyy) {
   return `${y}年${m}月${d}日`;
 }
 
-function SubjectTable({ title, subjects }) {
+function SubjectTable({ title, subjects, rowScale }) {
   const rows = [...(subjects||[])];
   return (
-    <table className="rc-subject-table">
+    <table className="rc-subject-table" style={{ "--row-scale": rowScale }}>
       <thead>
         <tr>
           <th className="rc-th-subject">{title}</th>
@@ -36,6 +36,17 @@ function SubjectTable({ title, subjects }) {
       </tbody>
     </table>
   );
+}
+
+// Determines how much to scale up row height + font size when a student has
+// very few subjects, so the table fills the page nicely instead of leaving
+// a large empty gap. Caps out for students with many subjects (no shrinking
+// below the normal compact size — only ever scales UP for sparse data).
+function getRowScale(totalSubjects) {
+  if (totalSubjects <= 6) return 1.6;
+  if (totalSubjects <= 9) return 1.3;
+  if (totalSubjects <= 12) return 1.1;
+  return 1; // 13+ subjects: standard compact size, as before
 }
 
 function RCHeader({ schoolYear }) {
@@ -192,6 +203,8 @@ function RCAddress({ pageNum }) {
 }
 
 function Page1({ student, signatures }) {
+  const totalSubjects = (student.subjectsI?.length||0) + (student.subjectsII?.length||0);
+  const rowScale = getRowScale(totalSubjects);
   return (
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
@@ -200,8 +213,8 @@ function Page1({ student, signatures }) {
       <div className="rc-rule"/>
       <div className="rc-body">
         <div className="rc-body-left">
-          <SubjectTable title="Subject I" subjects={student.subjectsI}/>
-          <SubjectTable title="Subject II" subjects={student.subjectsII}/>
+          <SubjectTable title="Subject I" subjects={student.subjectsI} rowScale={rowScale}/>
+          <SubjectTable title="Subject II" subjects={student.subjectsII} rowScale={rowScale}/>
           <RCFooterNotes/>
         </div>
         <div className="rc-body-right">

@@ -158,11 +158,11 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-body-right { flex: 1; }
 
 /* Subject tables */
-.rc-subject-table { width: 100%; border-collapse: collapse; margin-bottom: 2.5mm; font-size: 7.5pt; }
-.rc-subject-table thead th { background: #1a2e5e; color: #fff; padding: 2mm 2.5mm; text-align: left; border: 0.5pt solid #1a2e5e; }
+.rc-subject-table { width: 100%; border-collapse: collapse; margin-bottom: calc(2.5mm * var(--row-scale, 1)); font-size: calc(7.5pt * var(--row-scale, 1)); }
+.rc-subject-table thead th { background: #1a2e5e; color: #fff; padding: calc(2mm * var(--row-scale, 1)) 2.5mm; text-align: left; border: 0.5pt solid #1a2e5e; font-size: calc(7.5pt * var(--row-scale, 1)); }
 .rc-th-subject { width: 66%; }
 .rc-th-num { width: 17%; text-align: center !important; }
-.rc-row-data td { border: 0.5pt solid #c5cad5; padding: 1.5mm 2.5mm; font-size: 7.5pt; height: 5.5mm; }
+.rc-row-data td { border: 0.5pt solid #c5cad5; padding: calc(1.5mm * var(--row-scale, 1)) 2.5mm; font-size: calc(7.5pt * var(--row-scale, 1)); height: calc(5.5mm * var(--row-scale, 1)); }
 .rc-row-data:nth-child(odd) td { background: #f8f9fc; }
 .rc-cell-subject { color: #1a2e5e; }
 .rc-cell-num { text-align: center; }
@@ -319,3 +319,17 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .btn-apply-classwide:hover { background: #ffecb3; }
 
 .sync-note { font-size: 0.62rem; color: #1a7a4a; font-style: italic; font-weight: 400; }
+
+/* ── Chinese class level quick-select ────────────────────────────────────── */
+.chinese-level-select {
+  font-size: 0.68rem;
+  padding: 3px 6px;
+  border: 1px dashed #c9a227;
+  border-radius: 4px;
+  background: #fffaf0;
+  color: #8a6c14;
+  font-family: Arial, sans-serif;
+  cursor: pointer;
+  width: 100%;
+}
+.chinese-level-select:focus { outline: none; border-color: #1a2e5e; }
