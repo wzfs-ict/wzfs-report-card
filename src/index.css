@@ -127,14 +127,14 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 /* Header */
 .rc-header { display: flex; align-items: flex-start; gap: 0; margin-bottom: 3mm; }
 .rc-header-left { flex-shrink: 0; min-width: 34mm; }
-.rc-badge { display: inline-block; background: #1a2e5e; color: #fff; font-size: 8pt; font-weight: 700; padding: 2px 6px; border-radius: 2px; margin-bottom: 2px; }
-.rc-year-block { font-size: 7.5pt; color: #222; margin-top: 1px; }
-.rc-year-label { font-style: italic; font-size: 7pt; }
-.rc-year-value { font-size: 8.5pt; font-weight: 700; }
+.rc-badge { display: inline-block; background: #1a2e5e; color: #fff; font-size: 9.5pt; font-weight: 700; padding: 3px 7px; border-radius: 2px; margin-bottom: 2px; }
+.rc-year-block { font-size: 9pt; color: #222; margin-top: 1px; }
+.rc-year-label { font-style: italic; font-size: 8.5pt; }
+.rc-year-value { font-size: 10pt; font-weight: 700; }
 .rc-year-rule { border-bottom: 1.5px dashed #999; margin-top: 1mm; width: 28mm; }
 .rc-header-school { flex: 1; padding-left: 5mm; display: flex; flex-direction: column; justify-content: center; gap: 0.8mm; }
-.rc-school-en { font-size: 15pt; font-weight: 700; line-height: 1.1; color: #000; letter-spacing: -0.01em; white-space: nowrap; }
-.rc-school-zh { font-size: 13pt; font-weight: 700; color: #000; letter-spacing: 0.02em; line-height: 1.1; white-space: nowrap; }
+.rc-school-en { font-size: 19pt; font-weight: 700; line-height: 1.1; color: #000; letter-spacing: -0.01em; white-space: nowrap; }
+.rc-school-zh { font-size: 16pt; font-weight: 700; color: #000; letter-spacing: 0.02em; line-height: 1.1; white-space: nowrap; }
 .rc-header-logos { flex-shrink: 0; min-width: 30mm; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 2mm; }
 .rc-logo { height: 16mm; width: auto; object-fit: contain; }
 .rc-logo-wasc { height: 15mm; }
@@ -146,11 +146,11 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-info-row { display: flex; gap: 5mm; margin-bottom: 1.5mm; }
 .rc-info-cell { display: flex; align-items: baseline; gap: 1.5mm; flex: 0 0 auto; position: relative; padding-bottom: 2mm; }
 .rc-info-cell.wide { flex: 1; }
-.rc-lbl { font-size: 8pt; white-space: nowrap; }
-.rc-sep { font-size: 8pt; }
-.rc-val { font-size: 8pt; border-bottom: 1px dashed #aaa; min-width: 35mm; flex: 1; padding-bottom: 0.5mm; }
+.rc-lbl { font-size: 9.5pt; white-space: nowrap; }
+.rc-sep { font-size: 9.5pt; }
+.rc-val { font-size: 9.5pt; border-bottom: 1px dashed #aaa; min-width: 35mm; flex: 1; padding-bottom: 0.5mm; }
 .name-val { color: #1a2e5e; font-weight: 600; }
-.rc-sublbl { position: absolute; bottom: -1mm; left: 0; font-size: 6pt; color: #999; font-style: italic; white-space: nowrap; }
+.rc-sublbl { position: absolute; bottom: -1mm; left: 0; font-size: 7pt; color: #999; font-style: italic; white-space: nowrap; }
 
 /* Body */
 .rc-body { display: flex; gap: 4mm; flex: 1; margin-top: 3mm; }
@@ -158,53 +158,53 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-body-right { flex: 1; }
 
 /* Subject tables */
-.rc-subject-table { width: 100%; border-collapse: collapse; margin-bottom: calc(2.5mm * var(--row-scale, 1)); font-size: calc(7.5pt * var(--row-scale, 1)); }
-.rc-subject-table thead th { background: #1a2e5e; color: #fff; padding: calc(2mm * var(--row-scale, 1)) 2.5mm; text-align: left; border: 0.5pt solid #1a2e5e; font-size: calc(7.5pt * var(--row-scale, 1)); }
+.rc-subject-table { width: 100%; border-collapse: collapse; margin-bottom: calc(2.5mm * var(--row-scale, 1)); font-size: calc(9.5pt * var(--row-scale, 1)); }
+.rc-subject-table thead th { background: #1a2e5e; color: #fff; padding: calc(2.5mm * var(--row-scale, 1)) 3mm; text-align: left; border: 0.5pt solid #1a2e5e; font-size: calc(9.5pt * var(--row-scale, 1)); }
 .rc-th-subject { width: 66%; }
 .rc-th-num { width: 17%; text-align: center !important; }
-.rc-row-data td { border: 0.5pt solid #c5cad5; padding: calc(1.5mm * var(--row-scale, 1)) 2.5mm; font-size: calc(7.5pt * var(--row-scale, 1)); height: calc(5.5mm * var(--row-scale, 1)); }
+.rc-row-data td { border: 0.5pt solid #c5cad5; padding: calc(2mm * var(--row-scale, 1)) 3mm; font-size: calc(9.5pt * var(--row-scale, 1)); height: calc(6.5mm * var(--row-scale, 1)); }
 .rc-row-data:nth-child(odd) td { background: #f8f9fc; }
 .rc-cell-subject { color: #1a2e5e; }
 .rc-cell-num { text-align: center; }
-.rc-row-terminator td { border-color: transparent !important; background: transparent !important; font-size: 6.5pt; color: #bbb; font-style: italic; padding: 1mm 2.5mm; }
+.rc-row-terminator td { border-color: transparent !important; background: transparent !important; font-size: 8pt; color: #bbb; font-style: italic; padding: 1mm 3mm; }
 .rc-cell-terminator {}
 .rc-row-empty td { border: 0.5pt solid #e5e8f0; height: 5mm; background: #fff; }
 
 /* Attendance */
-.rc-att-table { width: 100%; border-collapse: collapse; margin-bottom: 2.5mm; font-size: 7.5pt; }
-.rc-att-th { background: #1a2e5e; color: #fff; padding: 2mm 2.5mm; font-weight: 700; border: 0.5pt solid #1a2e5e; text-align: left; }
-.rc-att-table td { border: 0.5pt solid #c5cad5; padding: 1.5mm 2.5mm; font-size: 7.5pt; }
+.rc-att-table { width: 100%; border-collapse: collapse; margin-bottom: 2.5mm; font-size: 9.5pt; }
+.rc-att-th { background: #1a2e5e; color: #fff; padding: 2.5mm 3mm; font-weight: 700; border: 0.5pt solid #1a2e5e; text-align: left; font-size: 9.5pt; }
+.rc-att-table td { border: 0.5pt solid #c5cad5; padding: 2mm 3mm; font-size: 9.5pt; }
 .rc-att-table tr:nth-child(odd) td { background: #f8f9fc; }
 .rc-att-val { text-align: center; width: 12mm; font-weight: 600; }
 
 /* Comments */
 .rc-comments-box { border: 0.5pt solid #c5cad5; }
-.rc-comments-hdr { background: #1a2e5e; color: #fff; font-weight: 700; padding: 2mm 2.5mm; font-size: 7.5pt; }
-.rc-comments-body { padding: 2mm 2.5mm; font-size: 7.5pt; line-height: 1.55; color: #111; }
+.rc-comments-hdr { background: #1a2e5e; color: #fff; font-weight: 700; padding: 2.5mm 3mm; font-size: 9.5pt; }
+.rc-comments-body { padding: 2.5mm 3mm; font-size: 9.5pt; line-height: 1.55; color: #111; }
 
 /* Footer notes */
-.rc-notes { margin-top: 2.5mm; font-size: 6pt; color: #444; line-height: 1.65; }
+.rc-notes { margin-top: 2.5mm; font-size: 7.5pt; color: #444; line-height: 1.65; }
 .rc-notes p { margin-bottom: 0.3mm; }
 
 /* Signatures */
 .rc-sigs { display: flex; justify-content: space-between; margin-top: 3mm; }
 .rc-sig-block { text-align: center; min-width: 58mm; }
 .rc-sig-line { width: 52mm; margin: 0 auto 1mm; height: 9mm; border-bottom: 0.8pt solid #000; }
-.rc-sig-role { font-size: 8pt; font-weight: 700; margin-bottom: 0.5mm; }
-.rc-sig-name { font-size: 7.5pt; font-style: italic; }
+.rc-sig-role { font-size: 9.5pt; font-weight: 700; margin-bottom: 0.5mm; }
+.rc-sig-name { font-size: 9pt; font-style: italic; }
 
 /* Address */
 .rc-address-row { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 2mm; }
-.rc-address-text { font-size: 6pt; color: #555; line-height: 1.6; text-align: center; flex: 1; }
-.rc-page-num { font-size: 6.5pt; color: #666; font-style: italic; white-space: nowrap; margin-left: 3mm; }
+.rc-address-text { font-size: 7.5pt; color: #555; line-height: 1.6; text-align: center; flex: 1; }
+.rc-page-num { font-size: 8pt; color: #666; font-style: italic; white-space: nowrap; margin-left: 3mm; }
 
 /* Page 2 */
 .rc-p2-body { flex: 1; padding: 2mm 0; }
-.rc-p2-section-title { background: #1a2e5e; color: #fff; font-size: 8.5pt; font-weight: 700; padding: 2mm 2.5mm; margin-bottom: 1.5mm; }
-.rc-p2-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.rc-p2-table th { background: #e8ecf5; padding: 2mm 2.5mm; border: 0.5pt solid #c5cad5; text-align: left; font-size: 7.5pt; }
+.rc-p2-section-title { background: #1a2e5e; color: #fff; font-size: 11pt; font-weight: 700; padding: 3mm 3.5mm; margin-bottom: 2mm; }
+.rc-p2-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+.rc-p2-table th { background: #e8ecf5; padding: 3mm 3.5mm; border: 0.5pt solid #c5cad5; text-align: left; font-size: 9.5pt; }
 .rc-p2-num { text-align: center !important; width: 22mm; }
-.rc-p2-table td { padding: 2mm 2.5mm; border: 0.5pt solid #c5cad5; font-size: 7.5pt; }
+.rc-p2-table td { padding: 3mm 3.5mm; border: 0.5pt solid #c5cad5; font-size: 9.5pt; }
 .rc-p2-table tr:nth-child(even) td { background: #f8f9fc; }
 .rc-p2-total td { background: #e8ecf5 !important; }
 .rc-p2-placeholder { padding: 8mm 0; text-align: center; font-size: 10pt; color: #ccc; letter-spacing: 0.1em; }
@@ -286,15 +286,15 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-comments-grow .rc-comments-body { flex: 1; }
 
 /* ── Accreditation strip ───────────────────────────────────────────────── */
-.rc-accred-strip { text-align: center; font-size: 6.5pt; color: #1a2e5e; font-weight: 600; letter-spacing: 0.03em; margin-top: 2mm; text-transform: uppercase; }
+.rc-accred-strip { text-align: center; font-size: 8pt; color: #1a2e5e; font-weight: 600; letter-spacing: 0.03em; margin-top: 2mm; text-transform: uppercase; }
 .rc-accred-dot { margin: 0 2mm; color: #c9a227; }
 
 /* ── Page 2 banner & quote ─────────────────────────────────────────────── */
 .rc-p2-banner { background: linear-gradient(135deg, #1a2e5e 0%, #243f82 100%); color: #fff; padding: 4mm 6mm; border-radius: 2mm; margin: 3mm 0 4mm; text-align: center; }
-.rc-p2-banner-title { font-size: 12pt; font-weight: 700; letter-spacing: 0.02em; }
-.rc-p2-banner-sub { font-size: 7.5pt; opacity: 0.85; margin-top: 1mm; font-style: italic; }
+.rc-p2-banner-title { font-size: 15pt; font-weight: 700; letter-spacing: 0.02em; }
+.rc-p2-banner-sub { font-size: 9.5pt; opacity: 0.85; margin-top: 1mm; font-style: italic; }
 .rc-p2-spacer { flex: 1; min-height: 8mm; }
-.rc-p2-quote { text-align: center; font-size: 9pt; font-style: italic; color: #888; padding: 6mm 12mm; line-height: 1.6; border-top: 0.5pt solid #e5e8f0; margin-top: 6mm; }
+.rc-p2-quote { text-align: center; font-size: 11pt; font-style: italic; color: #888; padding: 6mm 12mm; line-height: 1.6; border-top: 0.5pt solid #e5e8f0; margin-top: 6mm; }
 .rc-p2-body { display: flex; flex-direction: column; flex: 1; }
 
 /* ── Certificate edit card (sidebar) ──────────────────────────────────── */
@@ -333,3 +333,16 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
   width: 100%;
 }
 .chinese-level-select:focus { outline: none; border-color: #1a2e5e; }
+
+/* ── Page 2 compact student identifier strip (replaces full info block) ── */
+.rc-p2-student-strip {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  font-size: 10pt;
+  color: #1a2e5e;
+  font-weight: 600;
+  margin: 1mm 0;
+}
+.rc-p2-strip-name { color: #1a2e5e; }
+.rc-p2-strip-sep { color: #aaa; font-weight: 400; }

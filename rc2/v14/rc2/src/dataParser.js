@@ -151,29 +151,45 @@ export function parseMarksData(rows, meta={}) {
 export function parseAwardsData(rows) {
   if (!rows || rows.length===0) return {};
   const map = {};
+
   for (const row of rows) {
-    // Name: "Name of Student", "Name of student", "Name"
-    const name = v(row,"nameofstudent","name");
+    const keys = Object.keys(row);
+
+    // Name column: try common header variants first, then fall back to
+    // "the column right after Grade" or "the first text-heavy column" —
+    // some award sheets (e.g. Pi Day) don't use a recognizable header at all.
+    let name = v(row,"nameofstudent","name");
+    if (!name) {
+      const gradeIdx = keys.findIndex(k => /^grade$/i.test(k.trim()));
+      if (gradeIdx !== -1 && keys[gradeIdx + 1]) {
+        name = String(row[keys[gradeIdx + 1]] || "").trim();
+      }
+    }
     if (!name) continue;
-    const key = name.trim();
+    name = name.trim();
+    if (!name) continue;
+
+    const key = name;
     if (!map[key]) map[key] = [];
 
-    // Event/Award title: "Event", "Award", "Certificate", or the long Chinese Vocab header
+    // Event/Award title: try common headers, then fall back to "the column
+    // right after the name column" so unlabeled sheets like Pi Day still work.
     let awardName = v(row,"event","award","certificate");
     if (!awardName) {
-      // Chinese Vocab Competition sheet has the award title AS the 4th header itself
-      const keys = Object.keys(row);
+      const nameIdx = keys.findIndex(k => row[k] === name);
+      if (nameIdx !== -1 && keys[nameIdx + 1]) {
+        awardName = String(row[keys[nameIdx + 1]] || "").trim();
+      }
+    }
+    if (!awardName) {
       const fallbackCol = keys.find(k => /winner|list|award|certificate/i.test(k) && k.toLowerCase()!=="grade");
       if (fallbackCol) awardName = String(row[fallbackCol]||"").trim();
     }
+    if (!awardName) continue; // truly nothing to record for this row
 
-    // Recognition/Category/Remark = the type of award (usually "Certificate of Recognition")
     const recognition = v(row,"recognition","category","remark") || "Certificate of Recognition";
-
     const grade = v(row,"grade");
     const points = v(row,"points","servicepoints");
-
-    if (!awardName) continue; // skip fully blank rows
 
     map[key].push({
       type: recognition,
@@ -186,23 +202,57 @@ export function parseAwardsData(rows) {
   return map;
 }
 
+// Normalizes a name for comparison: lowercase, collapse whitespace, strip punctuation.
+function normName(s) {
+  return String(s||"").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,"").replace(/\s+/g," ").trim();
+}
+
 function normGrade(g) {
   // "6", "G6", "Grade 6" all become "6"
   return String(g||"").replace(/[^\d]/g,"").trim();
 }
 
+// Builds a lookup from normalized-name -> array of awards, so matching is
+// case/spacing/punctuation insensitive instead of requiring exact equality.
+function buildNormalizedAwardsIndex(awardsMap) {
+  const index = {};
+  for (const [rawName, awards] of Object.entries(awardsMap)) {
+    const norm = normName(rawName);
+    if (!index[norm]) index[norm] = [];
+    index[norm].push(...awards);
+  }
+  return index;
+}
+
 export function mergeStudentData(students, awardsMap) {
+  const normIndex = buildNormalizedAwardsIndex(awardsMap);
+
   return students.map(s => {
-    const firstName = s.name.split(" ")[0];
     const studentGrade = normGrade(s.grade);
+    const fullNameNorm = normName(s.name);
+    const nickNameNorm = normName(s.nickName);
+    const firstNameNorm = normName(s.name.split(" ")[0]);
+    // Reversed word order handles "Lee Seungyun" matching "Seungyun Lee"
+    const reversedNameNorm = normName(s.name.split(" ").reverse().join(" "));
 
-    // Try nick name, full name, first name (in that priority)
-    let awards = awardsMap[s.nickName] || awardsMap[s.name] || awardsMap[firstName] || [];
+    let awards = [];
+    let matchedByFirstNameOnly = false;
 
-    // If matched by first name only (ambiguous), filter to same grade if grade info exists on the award
-    if (!awardsMap[s.nickName] && !awardsMap[s.name] && awardsMap[firstName] && studentGrade) {
+    if (nickNameNorm && normIndex[nickNameNorm]) {
+      awards = normIndex[nickNameNorm];
+    } else if (normIndex[fullNameNorm]) {
+      awards = normIndex[fullNameNorm];
+    } else if (normIndex[reversedNameNorm]) {
+      awards = normIndex[reversedNameNorm];
+    } else if (firstNameNorm && normIndex[firstNameNorm]) {
+      awards = normIndex[firstNameNorm];
+      matchedByFirstNameOnly = true;
+    }
+
+    // If matched by first name only (ambiguous — many students share first names),
+    // narrow down using grade when the award row has grade info.
+    if (matchedByFirstNameOnly && studentGrade) {
       const gradeFiltered = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
-      // Only apply filter if it doesn't wipe out everything (in case grade data is missing/inconsistent)
       if (gradeFiltered.length > 0) awards = gradeFiltered;
     }
 

@@ -6,6 +6,15 @@ const GRADING_PERIODS = [
   "Spring Semester 2028", "Fall Semester 2028",
 ];
 
+const CHINESE_CLASS_LEVELS = [
+  "Chinese Elementary Class A-1",
+  "Chinese Elementary Class A-2",
+  "Chinese Elementary Class B",
+  "Chinese Intermediate Class",
+  "Chinese Advanced Class A-1",
+  "Chinese Advanced Class A-2",
+];
+
 // Convert "mm/dd/yyyy" -> "yyyy-mm-dd" for the HTML date input
 function toInputDate(mmddyyyy) {
   if (!mmddyyyy) return "";
@@ -58,24 +67,30 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
   };
   // Local edit buffer for subject names — lets the teacher type freely, then choose
   // whether to apply the rename to just this student or the whole class.
-  const [renameDraft, setRenameDraft] = useState({}); // key: "I-0" -> draft name
-  const setSubjNameLocal = (type, i, val) => {
-    setRenameDraft(prev => ({ ...prev, [`${type}-${i}`]: val }));
+  const [renameDraft, setRenameDraft] = useState({}); // key: "I-0" -> { oldName, newName }
+  const setSubjNameLocal = (type, i, val, originalName) => {
+    const draftKey = `${type}-${i}`;
+    setRenameDraft(prev => ({ ...prev, [draftKey]: { oldName: prev[draftKey]?.oldName ?? originalName, newName: val } }));
   };
   const commitNameThisStudent = (type, i) => {
     const draftKey = `${type}-${i}`;
-    const newName = renameDraft[draftKey];
-    if (newName === undefined) return;
+    const draft = renameDraft[draftKey];
+    if (!draft) return;
     const arr = [...(type==="I"?student.subjectsI:student.subjectsII)];
-    arr[i] = { ...arr[i], name: newName };
+    arr[i] = { ...arr[i], name: draft.newName };
     onChange(index, type==="I"?{subjectsI:arr}:{subjectsII:arr});
     setRenameDraft(prev => { const n={...prev}; delete n[draftKey]; return n; });
   };
-  const commitNameClassWide = (type, i, oldName) => {
-    const draftKey = `${type}-${i}`;
-    const newName = renameDraft[draftKey];
-    if (newName === undefined || !onRenameSubjectClassWide) return;
-    onRenameSubjectClassWide(type, oldName, newName);
+  // Fires on mousedown (before the input's onBlur) so we can read the pending
+  // rename before React clears it — avoids a race where blur wipes the draft
+  // before the class-wide click handler can read it.
+  const commitNameClassWide = (type, i, draftKey) => {
+    const draft = renameDraft[draftKey];
+    if (!draft || !onRenameSubjectClassWide) return;
+    onRenameSubjectClassWide(type, draft.oldName, draft.newName);
+    const arr = [...(type==="I"?student.subjectsI:student.subjectsII)];
+    arr[i] = { ...arr[i], name: draft.newName };
+    onChange(index, type==="I"?{subjectsI:arr}:{subjectsII:arr});
     setRenameDraft(prev => { const n={...prev}; delete n[draftKey]; return n; });
   };
 
@@ -112,22 +127,35 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
           <div className="edit-subsection-title">Subject I — Academic</div>
           {(student.subjectsI||[]).map((s,i)=>{
             const draftKey = `I-${i}`;
-            const hasDraft = renameDraft[draftKey] !== undefined && renameDraft[draftKey] !== s.name;
+            const draft = renameDraft[draftKey];
+            const hasDraft = draft && draft.newName !== draft.oldName;
+            const currentName = draft ? draft.newName : s.name;
+            const isChinese = /chinese/i.test(currentName);
             return (
             <div key={i} className="subj-block">
               <div className="edit-subject-row">
-                <input className="subj-name" value={renameDraft[draftKey] !== undefined ? renameDraft[draftKey] : s.name}
-                  onChange={e=>setSubjNameLocal("I",i,e.target.value)}
-                  onBlur={()=>{ if (hasDraft) commitNameThisStudent("I",i); }} />
+                <input className="subj-name" value={currentName}
+                  onChange={e=>setSubjNameLocal("I",i,e.target.value,s.name)}
+                  onBlur={()=>commitNameThisStudent("I",i)} />
                 <input className="subj-score" type="number" placeholder="Score" value={s.score??""}
                   onChange={e=>setSubj("I",i,"score",e.target.value)}
                   onBlur={()=>roundSubjScore("I",i)} />
                 <input className="subj-beh" type="number" min="1" max="4" placeholder="B" value={s.behaviour??""} onChange={e=>setSubj("I",i,"behaviour",e.target.value)} />
                 <button className="subj-remove" onClick={()=>delSubj("I",i)}>✕</button>
               </div>
+              {isChinese && (
+                <select className="chinese-level-select" value="" onChange={e=>{
+                  if (!e.target.value) return;
+                  setSubjNameLocal("I",i,e.target.value,s.name);
+                  setTimeout(()=>commitNameThisStudent("I",i), 0);
+                }}>
+                  <option value="">Quick-select Chinese level…</option>
+                  {CHINESE_CLASS_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
+                </select>
+              )}
               {hasDraft && (
-                <button className="btn-apply-classwide" onClick={()=>commitNameClassWide("I",i,s.name)}>
-                  Apply rename to all students with "{s.name}"
+                <button className="btn-apply-classwide" onMouseDown={()=>commitNameClassWide("I",i,draftKey)}>
+                  Apply rename to all students with "{draft.oldName}"
                 </button>
               )}
             </div>
@@ -137,22 +165,35 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
           <div className="edit-subsection-title" style={{marginTop:"10px"}}>Subject II — Extracurricular</div>
           {(student.subjectsII||[]).map((s,i)=>{
             const draftKey = `II-${i}`;
-            const hasDraft = renameDraft[draftKey] !== undefined && renameDraft[draftKey] !== s.name;
+            const draft = renameDraft[draftKey];
+            const hasDraft = draft && draft.newName !== draft.oldName;
+            const currentName = draft ? draft.newName : s.name;
+            const isChinese = /chinese/i.test(currentName);
             return (
             <div key={i} className="subj-block">
               <div className="edit-subject-row">
-                <input className="subj-name" value={renameDraft[draftKey] !== undefined ? renameDraft[draftKey] : s.name}
-                  onChange={e=>setSubjNameLocal("II",i,e.target.value)}
-                  onBlur={()=>{ if (hasDraft) commitNameThisStudent("II",i); }} />
+                <input className="subj-name" value={currentName}
+                  onChange={e=>setSubjNameLocal("II",i,e.target.value,s.name)}
+                  onBlur={()=>commitNameThisStudent("II",i)} />
                 <input className="subj-score" type="number" placeholder="Score" value={s.score??""}
                   onChange={e=>setSubj("II",i,"score",e.target.value)}
                   onBlur={()=>roundSubjScore("II",i)} />
                 <input className="subj-beh" type="number" min="1" max="4" placeholder="B" value={s.behaviour??""} onChange={e=>setSubj("II",i,"behaviour",e.target.value)} />
                 <button className="subj-remove" onClick={()=>delSubj("II",i)}>✕</button>
               </div>
+              {isChinese && (
+                <select className="chinese-level-select" value="" onChange={e=>{
+                  if (!e.target.value) return;
+                  setSubjNameLocal("II",i,e.target.value,s.name);
+                  setTimeout(()=>commitNameThisStudent("II",i), 0);
+                }}>
+                  <option value="">Quick-select Chinese level…</option>
+                  {CHINESE_CLASS_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
+                </select>
+              )}
               {hasDraft && (
-                <button className="btn-apply-classwide" onClick={()=>commitNameClassWide("II",i,s.name)}>
-                  Apply rename to all students with "{s.name}"
+                <button className="btn-apply-classwide" onMouseDown={()=>commitNameClassWide("II",i,draftKey)}>
+                  Apply rename to all students with "{draft.oldName}"
                 </button>
               )}
             </div>

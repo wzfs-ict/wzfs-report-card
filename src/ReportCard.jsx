@@ -241,7 +241,13 @@ function Page2({ student, signatures }) {
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
-      <RCStudentInfo student={student}/>
+      <div className="rc-p2-student-strip">
+        <span className="rc-p2-strip-name">{student.name}{student.nickName?` (${student.nickName})`:""}</span>
+        <span className="rc-p2-strip-sep">·</span>
+        <span>Grade {student.grade}</span>
+        <span className="rc-p2-strip-sep">·</span>
+        <span>{student.gradingPeriod}</span>
+      </div>
       <div className="rc-rule"/>
 
       <div className="rc-p2-banner">
