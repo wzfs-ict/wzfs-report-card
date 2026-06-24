@@ -36,9 +36,9 @@ export default function App() {
   const parseWithMergedHeaders = (sheet) => {
     const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false });
     const idPatterns = /student.?id|full.?name|student.?name|^name$|^id$/i;
-    const subPatterns = /^score$|^behaviour$|^behavior$/i;
+    const subPatterns = /^score$|^behaviour$|^behavior$|^type$/i;
 
-    // Find the row containing Score/Behaviour sub-headers
+    // Find the row containing Score/Behaviour/Type sub-headers
     let subRowIdx = -1;
     for (let i = 0; i < Math.min(5, raw.length); i++) {
       const row = raw[i] || [];
@@ -61,7 +61,10 @@ export default function App() {
 
     // Merged-header pattern found: row [subRowIdx - 1] holds subject group titles
     // (sparse — only set on the first column of each merged pair), row [subRowIdx]
-    // holds Score/Behaviour, and fixed columns (Student_ID etc.) live in subRowIdx too.
+    // holds Score/Behaviour/Type, and fixed columns (Student_ID etc.) live in subRowIdx too.
+    // "Type" (e.g. under "Chinese") becomes "Chinese_Type" — picked up by dataParser.js
+    // to use the student's specific class level (e.g. "Chinese Elementary Class A-1")
+    // as the subject name instead of the generic group title.
     const groupRow = raw[subRowIdx - 1] || [];
     const subRow = raw[subRowIdx] || [];
 

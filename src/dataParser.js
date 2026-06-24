@@ -42,8 +42,17 @@ function parseWide(rows, meta) {
     const scoreCols = keys.filter(k => /_score$/i.test(k));
     for (const sc of scoreCols) {
       const base = sc.replace(/_score$/i,"");
-      const displayName = cleanName(base);
-      const bCol = keys.find(k => new RegExp("^"+base+"_beh","i").test(k));
+      const baseEsc = base.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      const bCol = keys.find(k => new RegExp("^"+baseEsc+"_beh","i").test(k));
+      // Some subjects (e.g. Chinese) carry a per-student "Type" column instead of
+      // a fixed subject name — e.g. "Chinese Elementary Class A-1". When present,
+      // use that as the displayed subject name instead of the generic group title.
+      // Falls back to a bare "Type" column (unprefixed) for the Chinese group
+      // specifically, in case the source file's header merge isn't recognized.
+      const tCol = keys.find(k => new RegExp("^"+baseEsc+"_type$","i").test(k))
+        || (/chinese/i.test(base) ? keys.find(k => /^type$/i.test(k.trim())) : undefined);
+      const typeRaw = tCol ? String(row[tCol]).trim() : "";
+      const displayName = typeRaw || cleanName(base);
       const scoreRaw = String(row[sc]).trim();
       if (scoreRaw === "" || scoreRaw === "0" && !bCol) continue;
       const score = scoreRaw === "" ? null : Math.round(parseFloat(scoreRaw));
