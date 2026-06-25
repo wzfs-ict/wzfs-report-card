@@ -133,7 +133,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-year-value { font-size: 10pt; font-weight: 700; }
 .rc-year-rule { border-bottom: 1.5px dashed #999; margin-top: 1mm; width: 28mm; }
 .rc-header-school { flex: 1; padding-left: 5mm; display: flex; flex-direction: column; justify-content: center; gap: 0.8mm; }
-.rc-school-en { font-size: 18pt; font-weight: 700; line-height: 1.1; color: #000; letter-spacing: -0.01em; white-space: nowrap; }
+.rc-school-en { font-size: 16.5pt; font-weight: 700; line-height: 1.15; color: #000; letter-spacing: -0.01em; white-space: normal; }
 .rc-school-zh { font-size: 16pt; font-weight: 700; color: #000; letter-spacing: 0.02em; line-height: 1.1; white-space: nowrap; }
 .rc-header-logos { flex-shrink: 0; min-width: 30mm; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 2mm; }
 .rc-logo { height: 16mm; width: auto; object-fit: contain; }

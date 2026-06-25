@@ -1,16 +1,3 @@
-// Converts "mm/dd/yyyy" -> Chinese date format "yyyy年m月d日"
-function toChineseDate(mmddyyyy) {
-  if (!mmddyyyy) return "";
-  const parts = String(mmddyyyy).split("/");
-  if (parts.length !== 3) return mmddyyyy; // fallback: show as-is if format unexpected
-  const [mm, dd, yyyy] = parts;
-  const m = parseInt(mm, 10);
-  const d = parseInt(dd, 10);
-  const y = parseInt(yyyy, 10);
-  if (!m || !d || !y) return mmddyyyy;
-  return `${y}年${m}月${d}日`;
-}
-
 function SubjectTable({ title, subjects, rowScale }) {
   const rows = [...(subjects||[])];
   return (
@@ -89,8 +76,8 @@ function RCStudentInfo({ student }) {
       <div className="rc-info-row">
         <div className="rc-info-cell wide">
           <span className="rc-lbl">Date of Birth</span><span className="rc-sep">:</span>
-          <span className="rc-val">{toChineseDate(student.dob)}</span>
-          <span className="rc-sublbl">出生日期 (yyyy年m月d日)</span>
+          <span className="rc-val">{student.dob||""}</span>
+          <span className="rc-sublbl">出生日期 (mm/dd/yyyy)</span>
         </div>
         <div className="rc-info-cell">
           <span className="rc-lbl">Advisor</span><span className="rc-sep">:</span>
@@ -241,7 +228,13 @@ function Page2({ student, signatures }) {
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
-      <RCStudentInfo student={student}/>
+      <div className="rc-p2-student-strip">
+        <span className="rc-p2-strip-name">{student.name}{student.nickName?` (${student.nickName})`:""}</span>
+        <span className="rc-p2-strip-sep">·</span>
+        <span>Grade {student.grade}</span>
+        <span className="rc-p2-strip-sep">·</span>
+        <span>{student.gradingPeriod}</span>
+      </div>
       <div className="rc-rule"/>
 
       <div className="rc-p2-banner">

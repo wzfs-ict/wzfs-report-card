@@ -1,8 +1,9 @@
-// Subject type classification
+// Subject type classification — Subject II is extracurricular only; everything
+// else (including Chinese) defaults to Subject I (academic).
 const SUBJECT_II = [
   "pe","physical education","drama","orchestra","debate",
-  "well-being","wellbeing","elective","sports","board games",
-  "food tech","food technology","se","homeroom"
+  "well-being","wellbeing","pshe","careers","elective","ecc",
+  "sports","board games","food tech","food technology","homeroom"
 ];
 
 function getSubjectType(name) {
@@ -42,12 +43,23 @@ function parseWide(rows, meta) {
     const scoreCols = keys.filter(k => /_score$/i.test(k));
     for (const sc of scoreCols) {
       const base = sc.replace(/_score$/i,"");
-      const displayName = cleanName(base);
-      const bCol = keys.find(k => new RegExp("^"+base+"_beh","i").test(k));
+      const baseEsc = base.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      const bCol = keys.find(k => new RegExp("^"+baseEsc+"_beh","i").test(k));
+      // Some subjects (e.g. Chinese) carry a per-student "Type" column instead of
+      // a fixed subject name — e.g. "Chinese Elementary Class A-1". When present,
+      // use that as the displayed subject name instead of the generic group title.
+      // Falls back to a bare "Type" column (unprefixed) for the Chinese group
+      // specifically, in case the source file's header merge isn't recognized.
+      const tCol = keys.find(k => new RegExp("^"+baseEsc+"_type$","i").test(k))
+        || (/chinese/i.test(base) ? keys.find(k => /^type$/i.test(k.trim())) : undefined);
+      const typeRaw = tCol ? String(row[tCol]).trim() : "";
+      const displayName = typeRaw || cleanName(base);
       const scoreRaw = String(row[sc]).trim();
-      if (scoreRaw === "" || scoreRaw === "0" && !bCol) continue;
-      const score = scoreRaw === "" ? null : Math.round(parseFloat(scoreRaw));
       const bRaw = bCol ? String(row[bCol]).trim() : "";
+      // Only drop this subject for this student if there's truly no data at
+      // all (no score AND no behaviour). If either is present, keep it.
+      if (scoreRaw === "" && bRaw === "") continue;
+      const score = scoreRaw === "" ? null : Math.round(parseFloat(scoreRaw));
       const behaviour = bRaw === "" ? null : parseInt(bRaw);
       const entry = { name: displayName, score: isNaN(score)?null:score, behaviour: isNaN(behaviour)?null:behaviour };
       getSubjectType(base) === "II" ? subjectsII.push(entry) : subjectsI.push(entry);

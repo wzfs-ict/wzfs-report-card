@@ -6,15 +6,6 @@ const GRADING_PERIODS = [
   "Spring Semester 2028", "Fall Semester 2028",
 ];
 
-const CHINESE_CLASS_LEVELS = [
-  "Chinese Elementary Class A-1",
-  "Chinese Elementary Class A-2",
-  "Chinese Elementary Class B",
-  "Chinese Intermediate Class",
-  "Chinese Advanced Class A-1",
-  "Chinese Advanced Class A-2",
-];
-
 // Convert "mm/dd/yyyy" -> "yyyy-mm-dd" for the HTML date input
 function toInputDate(mmddyyyy) {
   if (!mmddyyyy) return "";
@@ -130,7 +121,6 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
             const draft = renameDraft[draftKey];
             const hasDraft = draft && draft.newName !== draft.oldName;
             const currentName = draft ? draft.newName : s.name;
-            const isChinese = /chinese/i.test(currentName);
             return (
             <div key={i} className="subj-block">
               <div className="edit-subject-row">
@@ -143,16 +133,6 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
                 <input className="subj-beh" type="number" min="1" max="4" placeholder="B" value={s.behaviour??""} onChange={e=>setSubj("I",i,"behaviour",e.target.value)} />
                 <button className="subj-remove" onClick={()=>delSubj("I",i)}>✕</button>
               </div>
-              {isChinese && (
-                <select className="chinese-level-select" value="" onChange={e=>{
-                  if (!e.target.value) return;
-                  setSubjNameLocal("I",i,e.target.value,s.name);
-                  setTimeout(()=>commitNameThisStudent("I",i), 0);
-                }}>
-                  <option value="">Quick-select Chinese level…</option>
-                  {CHINESE_CLASS_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                </select>
-              )}
               {hasDraft && (
                 <button className="btn-apply-classwide" onMouseDown={()=>commitNameClassWide("I",i,draftKey)}>
                   Apply rename to all students with "{draft.oldName}"
@@ -168,7 +148,6 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
             const draft = renameDraft[draftKey];
             const hasDraft = draft && draft.newName !== draft.oldName;
             const currentName = draft ? draft.newName : s.name;
-            const isChinese = /chinese/i.test(currentName);
             return (
             <div key={i} className="subj-block">
               <div className="edit-subject-row">
@@ -181,16 +160,6 @@ export default function EditPanel({ student, index, onChange, onTotalDaysSync, o
                 <input className="subj-beh" type="number" min="1" max="4" placeholder="B" value={s.behaviour??""} onChange={e=>setSubj("II",i,"behaviour",e.target.value)} />
                 <button className="subj-remove" onClick={()=>delSubj("II",i)}>✕</button>
               </div>
-              {isChinese && (
-                <select className="chinese-level-select" value="" onChange={e=>{
-                  if (!e.target.value) return;
-                  setSubjNameLocal("II",i,e.target.value,s.name);
-                  setTimeout(()=>commitNameThisStudent("II",i), 0);
-                }}>
-                  <option value="">Quick-select Chinese level…</option>
-                  {CHINESE_CLASS_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                </select>
-              )}
               {hasDraft && (
                 <button className="btn-apply-classwide" onMouseDown={()=>commitNameClassWide("II",i,draftKey)}>
                   Apply rename to all students with "{draft.oldName}"

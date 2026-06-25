@@ -1,8 +1,9 @@
-// Subject type classification
+// Subject type classification — Subject II is extracurricular only; everything
+// else (including Chinese) defaults to Subject I (academic).
 const SUBJECT_II = [
   "pe","physical education","drama","orchestra","debate",
-  "well-being","wellbeing","elective","sports","board games",
-  "food tech","food technology","se","homeroom"
+  "well-being","wellbeing","pshe","careers","elective","ecc",
+  "sports","board games","food tech","food technology","homeroom"
 ];
 
 function getSubjectType(name) {
@@ -54,9 +55,11 @@ function parseWide(rows, meta) {
       const typeRaw = tCol ? String(row[tCol]).trim() : "";
       const displayName = typeRaw || cleanName(base);
       const scoreRaw = String(row[sc]).trim();
-      if (scoreRaw === "" || scoreRaw === "0" && !bCol) continue;
-      const score = scoreRaw === "" ? null : Math.round(parseFloat(scoreRaw));
       const bRaw = bCol ? String(row[bCol]).trim() : "";
+      // Only drop this subject for this student if there's truly no data at
+      // all (no score AND no behaviour). If either is present, keep it.
+      if (scoreRaw === "" && bRaw === "") continue;
+      const score = scoreRaw === "" ? null : Math.round(parseFloat(scoreRaw));
       const behaviour = bRaw === "" ? null : parseInt(bRaw);
       const entry = { name: displayName, score: isNaN(score)?null:score, behaviour: isNaN(behaviour)?null:behaviour };
       getSubjectType(base) === "II" ? subjectsII.push(entry) : subjectsI.push(entry);
