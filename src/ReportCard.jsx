@@ -213,49 +213,21 @@ function Page1({ student, signatures }) {
   );
 }
 
-const SP_FIXED_ROWS = 8;
-const CERT_SINGLE_COL_MAX = 18;
-const CERT_TWO_COL_ROWS = 20;
-
-function ServicePointsTable({ sp }) {
-  const rows = [...sp];
-  const showTerminator = rows.length > 0 && rows.length < SP_FIXED_ROWS;
-  const blankCount = Math.max(0, SP_FIXED_ROWS - rows.length - (showTerminator ? 1 : 0));
-  return (
-    <table className="rc-p2-sp-table">
-      <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-      <tbody>
-        {rows.map((s,i)=>(
-          <tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>
-        ))}
-        {showTerminator && (
-          <tr className="rc-p2-sp-terminator"><td colSpan={2}>xx nothing follows xx</td></tr>
-        )}
-        {Array.from({length: blankCount}).map((_,i)=>(
-          <tr key={"blank-"+i} className="rc-p2-sp-blank"><td>&nbsp;</td><td></td></tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
 function Page2({ student, signatures }) {
   const sp    = student.servicePoints || [];
   const certs = student.certificates  || [];
 
-  // Switch to a 2-column grid once certs exceed the single-column capacity.
-  const wideMode = certs.length > CERT_SINGLE_COL_MAX;
+  // Switch to a 2-column grid for certs when there are more than 16 —
+  // this alone fits the typical 25-cert case without any scaling needed.
+  const wideMode = certs.length > 16;
 
-  // Safety net only: fixed sizing already covers up to SP_FIXED_ROWS SP rows
-  // and up to CERT_TWO_COL_ROWS*2 certs with margin to spare. Beyond that
-  // (rare), shrink slightly rather than overflow the page.
-  const certRows = wideMode ? Math.ceil(certs.length/2) : certs.length;
-  const certCap = wideMode ? CERT_TWO_COL_ROWS : CERT_SINGLE_COL_MAX;
-  const overflowUnits = Math.max(0, sp.length - SP_FIXED_ROWS) + Math.max(0, certRows - certCap);
-  const safetyScale = overflowUnits > 0 ? Math.max(0.8, 1 - overflowUnits * 0.025) : 1;
+  // Dynamic scale: shrinks row padding + font when even 2-column isn't enough.
+  // effectiveRows = SP rows + cert rows in current layout (1 or 2 cols).
+  const effectiveRows = sp.length + Math.ceil(certs.length / (wideMode ? 2 : 1));
+  const p2Scale = Math.min(1, Math.max(0.62, 20 / Math.max(20, effectiveRows)));
 
   return (
-    <div className="rc-page" style={{"--p2-safety": safetyScale}}>
+    <div className="rc-page" style={{"--p2-scale": p2Scale}}>
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <div className="rc-p2-student-strip">
@@ -273,13 +245,22 @@ function Page2({ student, signatures }) {
       </div>
 
       <div className="rc-p2-body">
-        <div className="rc-p2-section-title">Service Points</div>
-        <ServicePointsTable sp={sp}/>
+        {sp.length > 0 && (
+          <>
+            <div className="rc-p2-section-title">Service Points</div>
+            <table className="rc-p2-table">
+              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+              <tbody>
+                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
+              </tbody>
+            </table>
+          </>
+        )}
 
-        <div className="rc-p2-section-title rc-p2-cert-title">Certificates</div>
+        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "calc(6mm * var(--p2-scale,1))" : "0"}}>Certificates</div>
         {certs.length > 0 ? (
           wideMode ? (
-            // 2-column grid — fits 2× more entries at the same fixed row height
+            // 2-column grid — fits 2× more entries at the same row height
             <div className="rc-p2-certs-2col">
               {certs.map((c,i) => (
                 <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
@@ -289,12 +270,17 @@ function Page2({ student, signatures }) {
               ))}
             </div>
           ) : (
-            <table className="rc-p2-cert-table-1col">
+            <table className="rc-p2-table">
               <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
               <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
             </table>
           )
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
+
+        {p2Scale >= 0.78 && <div className="rc-p2-spacer"/>}
+        {p2Scale >= 0.78 && (
+          <div className="rc-p2-quote">"Use better Grades to build better Character."</div>
+        )}
       </div>
 
       <RCSignatures student={student} signatures={signatures}/>

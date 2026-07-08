@@ -201,62 +201,24 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-address-text { font-size: 7.5pt; color: #555; line-height: 1.6; text-align: center; flex: 1; }
 .rc-page-num { font-size: 8pt; color: #666; font-style: italic; white-space: nowrap; margin-left: 3mm; }
 
-/* Page 2 — FIXED layout (no data-driven font/row scaling). Sized to hold
-   up to 8 Service Points rows, and up to 18 Certificates in one column or
-   40 in a two-column grid, without shrinking. --p2-safety only kicks in
-   as a graceful fallback if data exceeds those caps (see ReportCard.jsx). */
-.rc-p2-body { flex: 1; padding: 2mm 0 0; display: flex; flex-direction: column; }
-.rc-p2-section-title {
-  background: #1a2e5e; color: #fff; font-weight: 700;
-  font-size: calc(9.5pt * var(--p2-safety,1));
-  height: calc(6.4mm * var(--p2-safety,1)); line-height: calc(6.4mm * var(--p2-safety,1));
-  padding: 0 3.5mm; margin-bottom: 1mm; box-sizing: border-box;
-}
-.rc-p2-cert-title { margin-top: 3mm; }
+/* Page 2 */
+.rc-p2-body { flex: 1; padding: 2mm 0; }
+.rc-p2-section-title { background: #1a2e5e; color: #fff; font-size: calc(10.5pt * var(--p2-scale,1)); font-weight: 700; padding: calc(2.8mm * var(--p2-scale,1)) calc(3.5mm * var(--p2-scale,1)); margin-bottom: calc(1.5mm * var(--p2-scale,1)); }
+.rc-p2-table { width: 100%; border-collapse: collapse; font-size: calc(9.5pt * var(--p2-scale,1)); }
+.rc-p2-table th { background: #e8ecf5; padding: calc(2.8mm * var(--p2-scale,1)) calc(3.5mm * var(--p2-scale,1)); border: 0.5pt solid #c5cad5; text-align: left; font-size: calc(9pt * var(--p2-scale,1)); }
 .rc-p2-num { text-align: center !important; width: 22mm; }
+.rc-p2-table td { padding: calc(2.5mm * var(--p2-scale,1)) calc(3.5mm * var(--p2-scale,1)); border: 0.5pt solid #c5cad5; font-size: calc(9.5pt * var(--p2-scale,1)); }
+.rc-p2-table tr:nth-child(even) td { background: #f8f9fc; }
+.rc-p2-total td { background: #e8ecf5 !important; }
 .rc-p2-placeholder { padding: 8mm 0; text-align: center; font-size: 10pt; color: #ccc; letter-spacing: 0.1em; }
 
-/* Service Points — always 8 fixed-height row slots (real rows, then a
-   terminator row, then blank rows), so Certificates always starts at the
-   same vertical position on the page. */
-.rc-p2-sp-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: calc(8.7pt * var(--p2-safety,1)); }
-.rc-p2-sp-table th {
-  background: #e8ecf5; border: 0.5pt solid #c5cad5; text-align: left;
-  font-size: calc(8.3pt * var(--p2-safety,1)); height: calc(5.6mm * var(--p2-safety,1)); padding: 0 3.5mm; box-sizing: border-box;
-}
-.rc-p2-sp-table td {
-  border: 0.5pt solid #c5cad5; height: calc(5.4mm * var(--p2-safety,1)); padding: 0 3.5mm;
-  font-size: calc(8.7pt * var(--p2-safety,1)); box-sizing: border-box; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-.rc-p2-sp-table tr:nth-child(even) td { background: #f8f9fc; }
-.rc-p2-sp-terminator td { color: #bbb; font-style: italic; font-size: calc(7.6pt * var(--p2-safety,1)); background: transparent !important; }
-.rc-p2-sp-blank td { background: #fff !important; }
-
-/* Certificates — single column (<=18 items) */
-.rc-p2-cert-table-1col { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: calc(8.7pt * var(--p2-safety,1)); }
-.rc-p2-cert-table-1col th {
-  background: #e8ecf5; border: 0.5pt solid #c5cad5; text-align: left;
-  font-size: calc(8.3pt * var(--p2-safety,1)); height: calc(5.6mm * var(--p2-safety,1)); padding: 0 3.5mm; box-sizing: border-box;
-}
-.rc-p2-cert-table-1col td {
-  border: 0.5pt solid #c5cad5; height: calc(5.4mm * var(--p2-safety,1)); padding: 0 3.5mm;
-  font-size: calc(8.7pt * var(--p2-safety,1)); box-sizing: border-box; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-.rc-p2-cert-table-1col tr:nth-child(even) td { background: #f8f9fc; }
-
-/* Certificates — 2-column grid (>18 items), fixed row height, capacity
-   20 rows per column = 40 total */
+/* 2-column certificate grid — activates when there are more than 16 certs */
 .rc-p2-certs-2col { display: grid; grid-template-columns: 1fr 1fr; border: 0.5pt solid #c5cad5; }
-.rc-p2-cert-cell {
-  display: flex; flex-direction: column; justify-content: center; gap: 0.4mm;
-  height: calc(5.4mm * var(--p2-safety,1)); padding: 0 3mm;
-  border-bottom: 0.5pt solid #c5cad5; border-right: 0.5pt solid #c5cad5;
-  box-sizing: border-box; overflow: hidden;
-}
+.rc-p2-cert-cell { display: flex; flex-direction: column; gap: calc(0.8mm * var(--p2-scale,1)); padding: calc(2.2mm * var(--p2-scale,1)) calc(3mm * var(--p2-scale,1)); border-bottom: 0.5pt solid #c5cad5; border-right: 0.5pt solid #c5cad5; }
 .rc-p2-cert-cell:nth-child(even) { border-right: none; }
 .rc-p2-cert-even { background: #f8f9fc; }
-.rc-p2-cert-name { font-size: calc(8.1pt * var(--p2-safety,1)); color: #1a2e5e; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rc-p2-cert-type { font-size: calc(6.8pt * var(--p2-safety,1)); color: #c9a227; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-p2-cert-name { font-size: calc(9pt * var(--p2-scale,1)); color: #1a2e5e; line-height: 1.2; }
+.rc-p2-cert-type { font-size: calc(7.8pt * var(--p2-scale,1)); color: #c9a227; }
 
 /* Page break */
 .rc-page-break { height: 5mm; background: #777; }
@@ -341,9 +303,11 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-accred-dot { margin: 0 2mm; color: #c9a227; }
 
 /* ── Page 2 banner & quote ─────────────────────────────────────────────── */
-.rc-p2-banner { background: linear-gradient(135deg, #1a2e5e 0%, #243f82 100%); color: #fff; padding: 3.5mm 6mm; border-radius: 2mm; margin: 3mm 0 3.5mm; text-align: center; }
-.rc-p2-banner-title { font-size: 15pt; font-weight: 700; letter-spacing: 0.02em; }
-.rc-p2-banner-sub { font-size: 9.5pt; opacity: 0.85; margin-top: 1mm; font-style: italic; }
+.rc-p2-banner { background: linear-gradient(135deg, #1a2e5e 0%, #243f82 100%); color: #fff; padding: calc(3.5mm * var(--p2-scale,1)) 6mm; border-radius: 2mm; margin: 3mm 0 calc(3.5mm * var(--p2-scale,1)); text-align: center; }
+.rc-p2-banner-title { font-size: calc(15pt * var(--p2-scale,1)); font-weight: 700; letter-spacing: 0.02em; }
+.rc-p2-banner-sub { font-size: calc(9.5pt * var(--p2-scale,1)); opacity: 0.85; margin-top: 1mm; font-style: italic; }
+.rc-p2-spacer { flex: 1; min-height: 8mm; }
+.rc-p2-quote { text-align: center; font-size: 11pt; font-style: italic; color: #888; padding: 6mm 12mm; line-height: 1.6; border-top: 0.5pt solid #e5e8f0; margin-top: 6mm; }
 .rc-p2-body { display: flex; flex-direction: column; flex: 1; }
 
 /* ── Certificate edit card (sidebar) ──────────────────────────────────── */
