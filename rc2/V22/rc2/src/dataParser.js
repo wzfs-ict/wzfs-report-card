@@ -6,6 +6,13 @@ const SUBJECT_II = [
   "sports","board games","food tech","food technology","homeroom"
 ];
 
+// parseInt with proper zero-preservation. `parseInt("0") || ""` incorrectly
+// returns "" because 0 is falsy. This returns 0 as 0 and blank/NaN as "".
+function intAttVal(raw) {
+  const n = parseInt(String(raw ?? "").trim(), 10);
+  return isNaN(n) ? "" : n;
+}
+
 function getSubjectType(name) {
   const n = name.toLowerCase();
   return SUBJECT_II.some(k => n.includes(k)) ? "II" : "I";
@@ -110,11 +117,11 @@ function parseWide(rows, meta) {
     }
 
     const att = {
-      totalDays: parseInt(v(row,"totaldays","schooldays")) || "",
-      daysPresent: parseInt(v(row,"dayspresent","present")) || "",
-      authAbsences: parseInt(v(row,"authabsences","authorizedabsences")) || "",
-      unauthAbsences: parseInt(v(row,"unauthabsences","unauthorizedabsences")) || "",
-      daysTardy: parseInt(v(row,"daystardy","tardy")) || "",
+      totalDays: intAttVal(v(row,"totaldays","schooldays")),
+      daysPresent: intAttVal(v(row,"dayspresent","present")),
+      authAbsences: intAttVal(v(row,"authabsences","authorizedabsences")),
+      unauthAbsences: intAttVal(v(row,"unauthabsences","unauthorizedabsences")),
+      daysTardy: intAttVal(v(row,"daystardy","tardy")),
     };
     const hasAtt = Object.values(att).some(x => x !== "");
 
@@ -166,11 +173,11 @@ function parseLong(rows, meta) {
     const td = v(row,"totaldays","schooldays");
     if (!s.attendance && td) {
       s.attendance = {
-        totalDays: parseInt(td)||"",
-        daysPresent: parseInt(v(row,"dayspresent"))||"",
-        authAbsences: parseInt(v(row,"authabsences","authorizedabsences"))||"",
-        unauthAbsences: parseInt(v(row,"unauthabsences","unauthorizedabsences"))||"",
-        daysTardy: parseInt(v(row,"daystardy","tardy"))||"",
+        totalDays: intAttVal(td),
+        daysPresent: intAttVal(v(row,"dayspresent")),
+        authAbsences: intAttVal(v(row,"authabsences","authorizedabsences")),
+        unauthAbsences: intAttVal(v(row,"unauthabsences","unauthorizedabsences")),
+        daysTardy: intAttVal(v(row,"daystardy","tardy")),
       };
     }
     const subName = v(row,"subjectname","subject");
@@ -235,7 +242,14 @@ export function parseAwardsData(rows) {
     }
     if (!awardName) continue; // truly nothing to record for this row
 
-    const recognition = v(row,"recognition","category","remark") || "Certificate of Recognition";
+    const recognition = v(row,"recognition","category","remark","type") || "Certificate of Recognition";
+    // Achievement-level values (Gold/Silver/Bronze etc.) in the category/recognition
+    // column indicate a service-points entry — e.g. "Parent Involvement | Gold".
+    // Pure certificate descriptions like "Certificate of Recognition" stay as-is
+    // and route to the Certificates section instead.
+    const achievementRx = /^(gold|silver|bronze|platinum|merit|pass|distinction)$/i;
+    const effectivePoints = points || (achievementRx.test(recognition.trim()) ? recognition.trim() : "");
+    const effectiveRecognition = achievementRx.test(recognition.trim()) ? "Certificate of Recognition" : recognition;
     // Grade column: match "Grade", "Class", "G6"-"G12"-style headers, or "YearGroup"
     const grade = v(row,"grade","class","yeargroup") || (() => {
       const gk = Object.keys(row).find(k => /^g\d{1,2}$|^grade\d{1,2}$/i.test(k.trim()));
@@ -244,9 +258,9 @@ export function parseAwardsData(rows) {
     const points = v(row,"points","servicepoints","service point");
 
     map[key].push({
-      type: recognition,
+      type: effectiveRecognition,
       name: awardName,
-      points,
+      points: effectivePoints,
       date: v(row,"date"),
       grade,
     });
@@ -260,8 +274,10 @@ function normName(s) {
 }
 
 function normGrade(g) {
+  const s = String(g||"").trim();
+  if (/^zsa$/i.test(s.replace(/[\s_-]/g,""))) return "ZSA";
   // "6", "G6", "Grade 6" all become "6"
-  return String(g||"").replace(/[^\d]/g,"").trim();
+  return s.replace(/[^\d]/g,"").trim();
 }
 
 // Builds a lookup from normalized-name -> array of awards, so matching is
@@ -283,27 +299,43 @@ export function mergeStudentData(students, awardsMap) {
     const studentGrade = normGrade(s.grade);
     const fullNameNorm = normName(s.name);
     const nickNameNorm = normName(s.nickName);
-    const firstNameNorm = normName(s.name.split(" ")[0]);
+    const nameWords = s.name.trim().split(/\s+/);
+    const firstNameNorm = normName(nameWords[0]);
+    const lastNameNorm  = normName(nameWords[nameWords.length - 1]);
     // Reversed word order handles "Lee Seungyun" matching "Seungyun Lee"
-    const reversedNameNorm = normName(s.name.split(" ").reverse().join(" "));
+    const reversedNameNorm = normName([...nameWords].reverse().join(" "));
 
     let awards = [];
     let matchedByFirstNameOnly = false;
 
     if (nickNameNorm && normIndex[nickNameNorm]) {
+      // Called name match (most specific — e.g. "Noah")
       awards = normIndex[nickNameNorm];
     } else if (normIndex[fullNameNorm]) {
+      // Full name exact match (e.g. "Hee Im")
       awards = normIndex[fullNameNorm];
     } else if (normIndex[reversedNameNorm]) {
+      // Reversed order match (Korean family-name-first → Western order)
       awards = normIndex[reversedNameNorm];
+    } else if (nickNameNorm && lastNameNorm && normIndex[`${nickNameNorm} ${lastNameNorm}`]) {
+      // Called name + family name (e.g. awards file has "Noah Kim" but called name is "Noah")
+      awards = normIndex[`${nickNameNorm} ${lastNameNorm}`];
     } else if (firstNameNorm && normIndex[firstNameNorm]) {
+      // Given name only — ambiguous, grade filter below will disambiguate
       awards = normIndex[firstNameNorm];
+      matchedByFirstNameOnly = true;
+    } else if (lastNameNorm && normIndex[lastNameNorm] && nameWords.length > 1) {
+      // Family name only as last resort
+      awards = normIndex[lastNameNorm];
       matchedByFirstNameOnly = true;
     }
 
-    // If matched by first name only (ambiguous — many students share first names),
-    // narrow down using grade when the award row has grade info.
-    if (matchedByFirstNameOnly && studentGrade) {
+    // Always narrow by grade when the award row carries grade info — this
+    // prevents students sharing a called name (e.g. "Noah") across different
+    // grades from picking up each other's awards.
+    // The guard `gradeFiltered.length > 0` ensures we never accidentally drop
+    // all awards on sheets that omit the grade column entirely.
+    if (studentGrade && awards.length > 0) {
       const gradeFiltered = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
       if (gradeFiltered.length > 0) awards = gradeFiltered;
     }
@@ -311,7 +343,12 @@ export function mergeStudentData(students, awardsMap) {
     return {
       ...s,
       certificates: awards.filter(a => !a.points || a.points===""),
-      servicePoints: awards.filter(a => a.points && a.points!=="").map(a=>({name:a.name,points:Number(a.points)||0})),
+      servicePoints: awards.filter(a => a.points && a.points!=="").map(a => {
+        const n = Number(a.points);
+        return { name: a.name, points: isNaN(n) ? a.points : n };
+        // Preserves text values like "Gold", "Silver", "Bronze" as-is,
+        // while still converting numeric strings like "16" to the number 16.
+      }),
     };
   });
 }
@@ -330,11 +367,11 @@ export function parseAttendanceData(rows) {
     const calledName = v(row,"calledname","nickname","nick");
 
     const att = {
-      totalDays:    parseInt(v(row,"totaldays","schooldays","totalnumberofschooldays")) || "",
-      daysPresent:  parseInt(v(row,"dayspresent","present","presentdays"))             || "",
-      authAbs:      parseInt(v(row,"authorizedabsences","authabs","authorised","authorized")) || "",
-      unauthAbs:    parseInt(v(row,"unauthorizedabsences","unauthabs","unauthorised","unauthorized")) || "",
-      tardy:        parseInt(v(row,"daystardy","tardy","late"))                        || "",
+      totalDays:     intAttVal(v(row,"totaldays","schooldays","totalnumberofschooldays")),
+      daysPresent:   intAttVal(v(row,"dayspresent","present","presentdays")),
+      authAbsences:  intAttVal(v(row,"authorizedabsences","authabs","authorised","authorized")),
+      unauthAbsences:intAttVal(v(row,"unauthorizedabsences","unauthabs","unauthorised","unauthorized")),
+      daysTardy:     intAttVal(v(row,"daystardy","tardy","late")),
     };
 
     // Only store rows that actually have some attendance data

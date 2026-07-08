@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import SignaturePad from "./SignaturePad";
-import { SIGNED_GRADES, GRADE_ADVISOR_MAP } from "./gradeAdvisors";
+import { SIGNED_GRADES, GRADE_ADVISOR_MAP, gradeDisplayKey } from "./gradeAdvisors";
 import { gradeSignatureMap } from "./gradeSignatures";
 
 const STORAGE_KEY = "wzfs_signatures_v1";
@@ -36,17 +36,20 @@ export default function SignatureManager({ onClose, principalName }) {
 
   // Fixed rows: one per grade with an assigned advisor, plus the principal.
   const rows = [
-    ...SIGNED_GRADES.map(n => ({
-      key: `G${n}`,
-      legacyName: GRADE_ADVISOR_MAP[n],
-      label: `G${n} — ${GRADE_ADVISOR_MAP[n]}`,
-      defaultUrl: gradeSignatureMap[n] || null,
-    })),
+    ...SIGNED_GRADES.map(n => {
+      const dk = gradeDisplayKey(n);          // "G6", "G7" … "ZSA"
+      return {
+        key: dk,
+        legacyName: GRADE_ADVISOR_MAP[n],
+        label: `${dk} — ${GRADE_ADVISOR_MAP[n]}`,
+        defaultUrl: gradeSignatureMap[n] || null,
+      };
+    }),
     {
       key: "principal",
       legacyName: principalName || "Mr. Arsenio Sumeg-ang",
       label: `Principal — ${principalName || "Mr. Arsenio Sumeg-ang"}`,
-      defaultUrl: null,
+      defaultUrl: gradeSignatureMap["principal"] || null,
     },
   ];
 

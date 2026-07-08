@@ -243,6 +243,13 @@ export function parseAwardsData(rows) {
     if (!awardName) continue; // truly nothing to record for this row
 
     const recognition = v(row,"recognition","category","remark","type") || "Certificate of Recognition";
+    // Achievement-level values (Gold/Silver/Bronze etc.) in the category/recognition
+    // column indicate a service-points entry — e.g. "Parent Involvement | Gold".
+    // Pure certificate descriptions like "Certificate of Recognition" stay as-is
+    // and route to the Certificates section instead.
+    const achievementRx = /^(gold|silver|bronze|platinum|merit|pass|distinction)$/i;
+    const effectivePoints = points || (achievementRx.test(recognition.trim()) ? recognition.trim() : "");
+    const effectiveRecognition = achievementRx.test(recognition.trim()) ? "Certificate of Recognition" : recognition;
     // Grade column: match "Grade", "Class", "G6"-"G12"-style headers, or "YearGroup"
     const grade = v(row,"grade","class","yeargroup") || (() => {
       const gk = Object.keys(row).find(k => /^g\d{1,2}$|^grade\d{1,2}$/i.test(k.trim()));
@@ -251,9 +258,9 @@ export function parseAwardsData(rows) {
     const points = v(row,"points","servicepoints","service point");
 
     map[key].push({
-      type: recognition,
+      type: effectiveRecognition,
       name: awardName,
-      points,
+      points: effectivePoints,
       date: v(row,"date"),
       grade,
     });
@@ -336,7 +343,12 @@ export function mergeStudentData(students, awardsMap) {
     return {
       ...s,
       certificates: awards.filter(a => !a.points || a.points===""),
-      servicePoints: awards.filter(a => a.points && a.points!=="").map(a=>({name:a.name,points:Number(a.points)||0})),
+      servicePoints: awards.filter(a => a.points && a.points!=="").map(a => {
+        const n = Number(a.points);
+        return { name: a.name, points: isNaN(n) ? a.points : n };
+        // Preserves text values like "Gold", "Silver", "Bronze" as-is,
+        // while still converting numeric strings like "16" to the number 16.
+      }),
     };
   });
 }
@@ -355,11 +367,11 @@ export function parseAttendanceData(rows) {
     const calledName = v(row,"calledname","nickname","nick");
 
     const att = {
-      totalDays:    intAttVal(v(row,"totaldays","schooldays","totalnumberofschooldays")),
-      daysPresent:  intAttVal(v(row,"dayspresent","present","presentdays")),
-      authAbs:      intAttVal(v(row,"authorizedabsences","authabs","authorised","authorized")),
-      unauthAbs:    intAttVal(v(row,"unauthorizedabsences","unauthabs","unauthorised","unauthorized")),
-      tardy:        intAttVal(v(row,"daystardy","tardy","late")),
+      totalDays:     intAttVal(v(row,"totaldays","schooldays","totalnumberofschooldays")),
+      daysPresent:   intAttVal(v(row,"dayspresent","present","presentdays")),
+      authAbsences:  intAttVal(v(row,"authorizedabsences","authabs","authorised","authorized")),
+      unauthAbsences:intAttVal(v(row,"unauthorizedabsences","unauthabs","unauthorised","unauthorized")),
+      daysTardy:     intAttVal(v(row,"daystardy","tardy","late")),
     };
 
     // Only store rows that actually have some attendance data

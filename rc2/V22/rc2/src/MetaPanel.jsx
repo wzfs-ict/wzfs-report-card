@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { GRADE_DEPARTMENTS, GRADE_ADVISOR_MAP, normGradeNum, departmentForGradeNum } from "./gradeAdvisors";
+import { GRADE_DEPARTMENTS, GRADE_ADVISOR_MAP, normGradeNum, departmentForGradeNum, gradeDisplayKey } from "./gradeAdvisors";
 
 const GRADING_PERIODS = [
   "Spring Semester 2026", "Fall Semester 2026",
@@ -7,11 +7,14 @@ const GRADING_PERIODS = [
   "Spring Semester 2028", "Fall Semester 2028",
 ];
 
-// Grade dropdown groups, displayed with a "G" prefix (G1, G2, …) to match
-// the existing convention used elsewhere on the report card.
-const GRADE_GROUPS = GRADE_DEPARTMENTS.map(g => ({ dept: g.dept, grades: g.grades.map(n => `G${n}`) }));
+// Build dropdown groups using each dept's own prefix rule
+const GRADE_GROUPS = GRADE_DEPARTMENTS.map(g => ({
+  dept: g.dept,
+  grades: g.grades.map(n => `${g.prefix}${n}`),   // "G6", "G7" … or "ZSA"
+}));
+
 function departmentForGrade(grade) { return departmentForGradeNum(normGradeNum(grade)); }
-function advisorForGrade(grade) { return GRADE_ADVISOR_MAP[normGradeNum(grade)] || ""; }
+function advisorForGrade(grade)    { return GRADE_ADVISOR_MAP[normGradeNum(grade)] || ""; }
 
 export default function MetaPanel({ values, onChange }) {
   const set = (key, val) => onChange(prev => ({ ...prev, [key]: val }));

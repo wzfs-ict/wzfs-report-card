@@ -1,4 +1,4 @@
-import { normGradeNum } from "./gradeAdvisors";
+import { normGradeNum, gradeDisplayKey } from "./gradeAdvisors";
 import { gradeSignatureMap } from "./gradeSignatures";
 
 function SubjectTable({ title, subjects, rowScale }) {
@@ -142,13 +142,14 @@ function AccreditationStrip() {
 }
 
 function RCSignatures({ student, signatures }) {
-  const gradeNum = normGradeNum(student.grade);
-  const gradeKey = gradeNum ? `G${gradeNum}` : null;
-  // Manual override (a teacher signed themselves) takes priority; otherwise
-  // fall back to the preloaded signature bundled for that grade.
+  const gradeNum = normGradeNum(student.grade);          // "7", "ZSA", ""
+  const gradeKey = gradeNum ? gradeDisplayKey(gradeNum) : null; // "G7", "ZSA", null
+  // Manual override (teacher signed in Manage Signatures) takes priority;
+  // otherwise fall back to the preloaded bundled signature for that grade.
   const advisorSig = (gradeKey && signatures?.[gradeKey]) || (gradeNum && gradeSignatureMap[gradeNum]) || null;
   const principalName = student.principal || "Mr. Arsenio Sumeg-ang";
-  const principalSig = signatures?.["principal"] || null;
+  // Principal: localStorage override → bundled principal.png → nothing
+  const principalSig = signatures?.["principal"] || gradeSignatureMap["principal"] || null;
 
   return (
     <div className="rc-sigs">
@@ -216,7 +217,6 @@ function Page1({ student, signatures }) {
 function Page2({ student, signatures }) {
   const sp = student.servicePoints||[];
   const certs = student.certificates||[];
-  const totalPoints = sp.reduce((a,b)=>a+(b.points||0),0);
   return (
     <div className="rc-page">
       <RCHeader schoolYear={student.schoolYear}/>
@@ -224,7 +224,7 @@ function Page2({ student, signatures }) {
       <div className="rc-p2-student-strip">
         <span className="rc-p2-strip-name">{student.name}{student.nickName?` (${student.nickName})`:""}</span>
         <span className="rc-p2-strip-sep">·</span>
-        <span>Grade {student.grade}</span>
+        <span>{/^\d/.test(normGradeNum(student.grade)) ? `Grade ${student.grade}` : student.grade}</span>
         <span className="rc-p2-strip-sep">·</span>
         <span>{student.gradingPeriod}</span>
       </div>
@@ -243,7 +243,6 @@ function Page2({ student, signatures }) {
               <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
               <tbody>
                 {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-                <tr className="rc-p2-total"><td><strong>Total</strong></td><td className="rc-p2-num"><strong>{totalPoints}</strong></td></tr>
               </tbody>
             </table>
           </>
