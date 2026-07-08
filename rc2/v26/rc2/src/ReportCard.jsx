@@ -126,7 +126,6 @@ function RCFooterNotes() {
       <p>- <em>Subject I – Academic Subjects</em></p>
       <p>- <em>Subject II – Extra Curricular Subjects</em></p>
       <p>- <em>Behaviour is scored from 1 (highest) to 4 (lowest). The behaviour score reflects both the student's attitude and effort in class. The rating is calculated independently of the exam score.</em></p>
-      <p>- <em>PSHE (Personal, Social, Health and Economic Education)</em></p>
       <p>- <em>PE (Physical Education)</em></p>
     </div>
   );
@@ -214,11 +213,49 @@ function Page1({ student, signatures }) {
   );
 }
 
-function Page2({ student, signatures }) {
-  const sp = student.servicePoints||[];
-  const certs = student.certificates||[];
+const SP_FIXED_ROWS = 8;
+const CERT_SINGLE_COL_MAX = 18;
+const CERT_TWO_COL_ROWS = 20;
+
+function ServicePointsTable({ sp }) {
+  const rows = [...sp];
+  const showTerminator = rows.length > 0 && rows.length < SP_FIXED_ROWS;
+  const blankCount = Math.max(0, SP_FIXED_ROWS - rows.length - (showTerminator ? 1 : 0));
   return (
-    <div className="rc-page">
+    <table className="rc-p2-sp-table">
+      <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+      <tbody>
+        {rows.map((s,i)=>(
+          <tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>
+        ))}
+        {showTerminator && (
+          <tr className="rc-p2-sp-terminator"><td colSpan={2}>xx nothing follows xx</td></tr>
+        )}
+        {Array.from({length: blankCount}).map((_,i)=>(
+          <tr key={"blank-"+i} className="rc-p2-sp-blank"><td>&nbsp;</td><td></td></tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Page2({ student, signatures }) {
+  const sp    = student.servicePoints || [];
+  const certs = student.certificates  || [];
+
+  // Switch to a 2-column grid once certs exceed the single-column capacity.
+  const wideMode = certs.length > CERT_SINGLE_COL_MAX;
+
+  // Safety net only: fixed sizing already covers up to SP_FIXED_ROWS SP rows
+  // and up to CERT_TWO_COL_ROWS*2 certs with margin to spare. Beyond that
+  // (rare), shrink slightly rather than overflow the page.
+  const certRows = wideMode ? Math.ceil(certs.length/2) : certs.length;
+  const certCap = wideMode ? CERT_TWO_COL_ROWS : CERT_SINGLE_COL_MAX;
+  const overflowUnits = Math.max(0, sp.length - SP_FIXED_ROWS) + Math.max(0, certRows - certCap);
+  const safetyScale = overflowUnits > 0 ? Math.max(0.8, 1 - overflowUnits * 0.025) : 1;
+
+  return (
+    <div className="rc-page" style={{"--p2-safety": safetyScale}}>
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <div className="rc-p2-student-strip">
@@ -236,30 +273,28 @@ function Page2({ student, signatures }) {
       </div>
 
       <div className="rc-p2-body">
-        {sp.length > 0 && (
-          <>
-            <div className="rc-p2-section-title">Service Points</div>
-            <table className="rc-p2-table">
-              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-              <tbody>
-                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              </tbody>
-            </table>
-          </>
-        )}
+        <div className="rc-p2-section-title">Service Points</div>
+        <ServicePointsTable sp={sp}/>
 
-        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "8mm" : "0"}}>Certificates</div>
+        <div className="rc-p2-section-title rc-p2-cert-title">Certificates</div>
         {certs.length > 0 ? (
-          <table className="rc-p2-table">
-            <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
-            <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
-          </table>
+          wideMode ? (
+            // 2-column grid — fits 2× more entries at the same fixed row height
+            <div className="rc-p2-certs-2col">
+              {certs.map((c,i) => (
+                <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
+                  <span className="rc-p2-cert-name">{c.name}</span>
+                  <span className="rc-p2-cert-type">{c.type}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <table className="rc-p2-cert-table-1col">
+              <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
+              <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
+            </table>
+          )
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
-
-        <div className="rc-p2-spacer"/>
-        <div className="rc-p2-quote">
-          "Use better Grades to build better Character."
-        </div>
       </div>
 
       <RCSignatures student={student} signatures={signatures}/>
