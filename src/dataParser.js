@@ -355,15 +355,37 @@ export function mergeStudentData(students, awardsMap) {
 
     return {
       ...s,
-      certificates: awards.filter(a => !a.points || a.points===""),
-      servicePoints: awards.filter(a => a.points && a.points!=="").map(a => {
-        const n = Number(a.points);
-        return { name: a.name, points: isNaN(n) ? a.points : n };
-        // Preserves text values like "Gold", "Silver", "Bronze" as-is,
-        // while still converting numeric strings like "16" to the number 16.
-      }),
+      certificates: dedupeAwards(
+        awards.filter(a => !a.points || a.points===""),
+        a => `${normName(a.name)}|${normName(a.type)}`
+      ),
+      servicePoints: dedupeAwards(
+        awards.filter(a => a.points && a.points!=="").map(a => {
+          const n = Number(a.points);
+          return { name: a.name, points: isNaN(n) ? a.points : n };
+          // Preserves text values like "Gold", "Silver", "Bronze" as-is,
+          // while still converting numeric strings like "16" to the number 16.
+        }),
+        a => `${normName(a.name)}|${String(a.points).toLowerCase()}`
+      ),
     };
   });
+}
+
+// Removes duplicate award entries — the same certificate or service point
+// can end up listed twice when a student appears in more than one tab of
+// the awards workbook with an identical entry. Keeps the first occurrence
+// and its original order; `keyFn` decides what counts as "the same award".
+function dedupeAwards(list, keyFn) {
+  const seen = new Set();
+  const out = [];
+  for (const item of list) {
+    const key = keyFn(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
 }
 
 // ─── Attendance data parser ───────────────────────────────────────────────────
