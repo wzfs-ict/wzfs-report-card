@@ -217,15 +217,15 @@ function Page2({ student }) {
   const sp    = student.servicePoints || [];
   const certs = student.certificates  || [];
 
-  // Always use the 2-column grid layout for certificates to save vertical space
-  const effectiveRows = sp.length + Math.ceil(certs.length / 2);
-  
-  // Adjusted scaling: Since we removed signatures and enforced 2-column layout,
-  // we have significantly more space. This scales gently if there's a massive amount.
-  const p2Scale = Math.min(1, Math.max(0.65, 20 / Math.max(20, effectiveRows)));
+  // Use 2-column layouts for both service points and certificates to save space.
+  const effectiveRows = Math.ceil(sp.length / 2) + Math.ceil(certs.length / 2);
+
+  // Tighten the page for denser data so the quote and footer stay visible.
+  const p2Scale = Math.min(1, Math.max(0.58, 24 / Math.max(24, sp.length + certs.length + 8)));
+  const p2Pad = Math.max(0.78, p2Scale);
 
   return (
-    <div className="rc-page" style={{"--p2-scale": p2Scale}}>
+    <div className="rc-page" style={{"--p2-scale": p2Scale, "--p2-pad": p2Pad}}>
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <div className="rc-p2-student-strip">
@@ -246,12 +246,14 @@ function Page2({ student }) {
         {sp.length > 0 && (
           <>
             <div className="rc-p2-section-title">Service Points</div>
-            <table className="rc-p2-table">
-              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-              <tbody>
-                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              </tbody>
-            </table>
+            <div className="rc-p2-sp-grid">
+              {sp.map((s,i) => (
+                <div key={i} className={`rc-p2-sp-cell${i%2===1 ? " rc-p2-sp-even" : ""}`}>
+                  <span className="rc-p2-sp-name">{s.name}</span>
+                  <span className="rc-p2-sp-points">{s.points}</span>
+                </div>
+              ))}
+            </div>
           </>
         )}
 
