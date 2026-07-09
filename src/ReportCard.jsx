@@ -182,8 +182,20 @@ function RCAddress({ pageNum }) {
   );
 }
 
+function normalizeSubjectGroups(subjectsI = [], subjectsII = []) {
+  const movedMusic = subjectsI.filter(s => s.name?.trim().toLowerCase() === "music");
+  if (!movedMusic.length) {
+    return { subjectsI, subjectsII };
+  }
+  return {
+    subjectsI: subjectsI.filter(s => s.name?.trim().toLowerCase() !== "music"),
+    subjectsII: [...subjectsII, ...movedMusic],
+  };
+}
+
 function Page1({ student, signatures }) {
-  const totalSubjects = (student.subjectsI?.length||0) + (student.subjectsII?.length||0);
+  const { subjectsI, subjectsII } = normalizeSubjectGroups(student.subjectsI, student.subjectsII);
+  const totalSubjects = (subjectsI?.length||0) + (subjectsII?.length||0);
   const rowScale = getRowScale(totalSubjects);
   return (
     <div className="rc-page">
