@@ -224,7 +224,12 @@ function Page2({ student, signatures }) {
   // Dynamic scale: shrinks row padding + font when even 2-column isn't enough.
   // effectiveRows = SP rows + cert rows in current layout (1 or 2 cols).
   const effectiveRows = sp.length + Math.ceil(certs.length / (wideMode ? 2 : 1));
-  const p2Scale = Math.min(1, Math.max(0.62, 20 / Math.max(20, effectiveRows)));
+  
+  // Applies a more aggressive scaling explicitly for students with >9 certificates 
+  // to compensate for wrapped text height, while leaving <9 completely unaffected.
+  const p2Scale = certs.length > 9 
+    ? Math.min(1, Math.max(0.62, 12 / (sp.length + certs.length)))
+    : Math.min(1, Math.max(0.62, 20 / Math.max(20, effectiveRows)));
 
   return (
     <div className="rc-page" style={{"--p2-scale": p2Scale}}>
@@ -300,3 +305,6 @@ export default function ReportCard({ student, signatures }) {
     </div>
   );
 }
+```eof
+
+By using a more aggressive mathematical scale division (`12 / (sp.length + certs.length)`) that is exclusively applied for `certs.length > 9`, the page is safely shrunk down to prevent elements from bleeding into the next page, accounting correctly for long texts that wrap across multiple lines. Students with 9 or fewer certificates are evaluated exactly the same way they were previously.
