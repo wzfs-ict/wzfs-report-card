@@ -1,5 +1,5 @@
 import xlsx from 'xlsx';
-import { parseAttendanceData, mergeAttendanceData, parseMarksData, parseWithMergedHeaders } from './src/dataParser.js';
+import { parseAttendanceData, mergeAttendanceData, parseMarksData, parseWithMergedHeaders, canonicalName, canonicalFirstName } from './src/dataParser.js';
 import path from 'path';
 
 const attendanceFile = path.resolve('C:/Users/WZFS_ICT/OneDrive - Weihai Zhongshi Foreign School/WZFS - All Staff - Staff Resources/Marks Entry - Sub Teachers/Spring 2026/Final/AttendanceData(Spring2026).xlsx');

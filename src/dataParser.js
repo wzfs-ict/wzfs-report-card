@@ -325,7 +325,28 @@ export function parseAwardsData(rows) {
 
 // Normalizes a name for comparison: lowercase, collapse whitespace, strip punctuation.
 function normName(s) {
-  return String(s||"").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,"").replace(/\s+/g," ").trim();
+  return String(s||"").toLowerCase().replace(/[^^\p{L}\p{N}\s]/gu,"").replace(/\s+/g," ").trim();
+}
+
+const NAME_ALIASES = {
+  stefy: "stefania",
+  stephania: "stefania",
+  stefania: "stefania",
+  steph: "stefania",
+  stef: "stefania",
+};
+
+function canonicalName(s) {
+  return normName(s)
+    .split(" ")
+    .filter(Boolean)
+    .map(w => NAME_ALIASES[w] || w)
+    .join(" ");
+}
+
+function canonicalFirstName(s) {
+  const words = normName(s).split(" ").filter(Boolean);
+  return words.length ? (NAME_ALIASES[words[0]] || words[0]) : "";
 }
 
 function normGrade(g) {
@@ -345,15 +366,21 @@ function buildNormalizedAwardsIndex(awardsMap) {
     index[key].push(...awards);
   };
   for (const [rawName, awards] of Object.entries(awardsMap)) {
-    addEntry(normName(rawName), awards);
-    // Handle "FULLNAME (CalledName)" format — e.g. "GAYEONG KIM (Amy)".
-    // Index under the base name AND the parenthesized portion separately
-    // so the award matches whether the marks file uses the full name or
-    // the called name (grade filter then disambiguates if needed).
+    const nameNorm = normName(rawName);
+    const nameCanon = canonicalName(rawName);
+    addEntry(nameNorm, awards);
+    if (nameCanon && nameCanon !== nameNorm) addEntry(nameCanon, awards);
+
     const pm = rawName.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
     if (pm) {
-      addEntry(normName(pm[1]), awards); // "gayeong kim"
-      addEntry(normName(pm[2]), awards); // "amy"
+      const baseNorm = normName(pm[1]);
+      const baseCanon = canonicalName(pm[1]);
+      const callNorm = normName(pm[2]);
+      const callCanon = canonicalName(pm[2]);
+      addEntry(baseNorm, awards);
+      if (baseCanon && baseCanon !== baseNorm) addEntry(baseCanon, awards);
+      addEntry(callNorm, awards);
+      if (callCanon && callCanon !== callNorm) addEntry(callCanon, awards);
     }
   }
   return index;
@@ -365,11 +392,13 @@ export function mergeStudentData(students, awardsMap) {
   return students.map(s => {
     const studentGrade = normGrade(s.grade);
     const fullNameNorm = normName(s.name);
+    const fullNameCanon = canonicalName(s.name);
     const nickNameNorm = normName(s.nickName);
-    const nameWords = s.name.trim().split(/\s+/);
-    const firstNameNorm = normName(nameWords[0]);
-    const lastNameNorm  = normName(nameWords[nameWords.length - 1]);
-    // Reversed word order handles "Lee Seungyun" matching "Seungyun Lee"
+    const nickNameCanon = canonicalName(s.nickName);
+    const nameWords = normName(s.name).split(/\s+/).filter(Boolean);
+    const firstNameNorm = nameWords[0] || "";
+    const firstNameCanon = canonicalFirstName(s.name);
+    const lastNameNorm  = nameWords[nameWords.length - 1] || "";
     const reversedNameNorm = normName([...nameWords].reverse().join(" "));
 
     let awards = [];
@@ -378,9 +407,13 @@ export function mergeStudentData(students, awardsMap) {
     if (nickNameNorm && normIndex[nickNameNorm]) {
       // Called name match (most specific — e.g. "Noah")
       awards = normIndex[nickNameNorm];
+    } else if (nickNameCanon && normIndex[nickNameCanon]) {
+      awards = normIndex[nickNameCanon];
     } else if (normIndex[fullNameNorm]) {
       // Full name exact match (e.g. "Hee Im")
       awards = normIndex[fullNameNorm];
+    } else if (fullNameCanon && normIndex[fullNameCanon]) {
+      awards = normIndex[fullNameCanon];
     } else if (normIndex[reversedNameNorm]) {
       // Reversed order match (Korean family-name-first → Western order)
       awards = normIndex[reversedNameNorm];
@@ -390,6 +423,9 @@ export function mergeStudentData(students, awardsMap) {
     } else if (firstNameNorm && normIndex[firstNameNorm]) {
       // Given name only — ambiguous, grade filter below will disambiguate
       awards = normIndex[firstNameNorm];
+      matchedByFirstNameOnly = true;
+    } else if (firstNameCanon && normIndex[firstNameCanon]) {
+      awards = normIndex[firstNameCanon];
       matchedByFirstNameOnly = true;
     } else if (lastNameNorm && normIndex[lastNameNorm] && nameWords.length > 1) {
       // Family name only as last resort
@@ -457,6 +493,8 @@ export function parseAttendanceData(rows) {
     const calledName = v(row,"calledname","nickname","nick");
     const gradeRaw = v(row,"grade","class","yeargroup");
     const gradeNorm = normGrade(gradeRaw);
+    const fullNameCanon = canonicalName(fullName);
+    const calledNameCanon = canonicalName(calledName);
 
     const att = {
       totalDays:     intAttVal(v(row,"totaldays","schooldays","totalnumberofschooldays")),
@@ -474,13 +512,43 @@ export function parseAttendanceData(rows) {
 
     if (fullName) {
       const k = normName(fullName);
+      const kc = fullNameCanon;
+      const firstNorm = (normName(fullName).split(/\s+/)[0] || "");
+      const firstCanon = canonicalFirstName(fullName);
       if (!byName.has(k)) byName.set(k, []);
       byName.get(k).push({ grade: gradeNorm, att });
+      if (kc && kc !== k) {
+        if (!byName.has(kc)) byName.set(kc, []);
+        byName.get(kc).push({ grade: gradeNorm, att });
+      }
+      if (firstNorm && firstNorm !== k) {
+        if (!byName.has(firstNorm)) byName.set(firstNorm, []);
+        byName.get(firstNorm).push({ grade: gradeNorm, att });
+      }
+      if (firstCanon && firstCanon !== firstNorm) {
+        if (!byName.has(firstCanon)) byName.set(firstCanon, []);
+        byName.get(firstCanon).push({ grade: gradeNorm, att });
+      }
     }
     if (calledName) {
       const k = normName(calledName);
+      const kc = calledNameCanon;
+      const firstNorm = (normName(calledName).split(/\s+/)[0] || "");
+      const firstCanon = canonicalFirstName(calledName);
       if (!byName.has(k)) byName.set(k, []);
       byName.get(k).push({ grade: gradeNorm, att });
+      if (kc && kc !== k) {
+        if (!byName.has(kc)) byName.set(kc, []);
+        byName.get(kc).push({ grade: gradeNorm, att });
+      }
+      if (firstNorm && firstNorm !== k) {
+        if (!byName.has(firstNorm)) byName.set(firstNorm, []);
+        byName.get(firstNorm).push({ grade: gradeNorm, att });
+      }
+      if (firstCanon && firstCanon !== firstNorm) {
+        if (!byName.has(firstCanon)) byName.set(firstCanon, []);
+        byName.get(firstCanon).push({ grade: gradeNorm, att });
+      }
     }
   }
   return { byId, byName };
@@ -502,7 +570,17 @@ export function mergeAttendanceData(students, attendanceMap) {
     if (!imported) {
       const nameKey = normName(s.nickName || s.name || "");
       const fullKey = normName(s.name || "");
-      const candidates = (byName.get(nameKey) || []).concat(byName.get(fullKey) || []);
+      const nameKeyCanon = canonicalName(s.nickName || s.name || "");
+      const fullKeyCanon = canonicalName(s.name || "");
+      const firstNameCanon = canonicalFirstName(s.nickName || s.name || "");
+      const firstNameNorm = (normName(s.nickName || s.name || "").split(/\s+/)[0] || "");
+      const keysToTry = [nameKey, nameKeyCanon, fullKey, fullKeyCanon, firstNameCanon, firstNameNorm];
+      const candidates = [];
+      for (const k of keysToTry) {
+        if (!k) continue;
+        const arr = byName.get(k);
+        if (arr) candidates.push(...arr);
+      }
       if (candidates.length > 0) {
         const studentGrade = normGrade(s.grade);
         // Prefer candidate with matching grade (or blank grade in source)
