@@ -446,18 +446,6 @@ export function mergeStudentData(students, awardsMap) {
       }
     }
 
-    // Always narrow by grade when the award row carries grade info — this
-    // prevents students sharing a called name (e.g. "Noah") across different
-    // grades from picking up each other's awards.
-    // The guard `gradeFiltered.length > 0` ensures we never accidentally drop
-    // all awards on sheets that omit the grade column entirely.
-    if (studentGrade && awards.length > 0) {
-      const hasGradeInfo = awards.some(a => String(a.grade || '').trim() !== '');
-      if (hasGradeInfo) {
-        awards = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
-      }
-    }
-
     return {
       ...s,
       certificates: dedupeAwards(
