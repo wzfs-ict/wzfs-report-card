@@ -205,8 +205,8 @@ function Page1({ student, signatures }) {
       <div className="rc-rule"/>
       <div className="rc-body">
         <div className="rc-body-left">
-          <SubjectTable title="Subject I" subjects={student.subjectsI} rowScale={rowScale}/>
-          <SubjectTable title="Subject II" subjects={student.subjectsII} rowScale={rowScale}/>
+          <SubjectTable title="Subject I" subjects={subjectsI} rowScale={rowScale}/>
+          <SubjectTable title="Subject II" subjects={subjectsII} rowScale={rowScale}/>
           <RCFooterNotes/>
         </div>
         <div className="rc-body-right">
