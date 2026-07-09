@@ -228,6 +228,26 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f6; color: #1
 .rc-p2-cert-name { font-size: 9pt; color: #1a2e5e; line-height: 1.25; word-wrap: break-word; overflow-wrap: break-word; }
 .rc-p2-cert-type { font-size: 7.8pt; color: #c9a227; }
 
+/* Watermark for Page 2 (faint, behind content, doesn't affect layout) */
+.rc-page-p2 { position: relative; }
+.rc-page-p2 .rc-watermark {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  transform: translate(-50%, -50%) rotate(-10deg);
+  font-size: 30pt;
+  color: #1a2e5e;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
+}
+.rc-page-p2 > * { position: relative; z-index: 1; }
+
+@media print {
+  .rc-page-p2 .rc-watermark { opacity: 0.04; }
+}
+
 /* Page break */
 .rc-page-break { height: 5mm; background: #777; }
 

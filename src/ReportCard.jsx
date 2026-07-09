@@ -237,7 +237,7 @@ function Page2({ student }) {
   const p2Pad = Math.max(0.78, p2Scale);
 
   return (
-    <div className="rc-page" style={{"--p2-scale": p2Scale, "--p2-pad": p2Pad}}>
+    <div className="rc-page rc-page-p2" style={{"--p2-scale": p2Scale, "--p2-pad": p2Pad}}>
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <div className="rc-p2-student-strip">
@@ -288,6 +288,8 @@ function Page2({ student }) {
       </div>
 
       {/* Signatures removed from Page 2 to maximize space for certificates */}
+        {/* Watermark inserted as a faint absolute overlay so it doesn't affect layout */}
+        <div className="rc-watermark" aria-hidden="true">xx nothing follows xx</div>
       
       <div className="rc-rule"/>
       <AccreditationStrip/>

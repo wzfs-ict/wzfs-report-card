@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+
 // Subject type classification — Subject II is extracurricular only; everything
 // else (including Chinese) defaults to Subject I (academic).
 const SUBJECT_II = [
@@ -40,6 +42,7 @@ function v(row, ...candidates) {
 //  2. Already-formatted date strings — "9/2/2012", "09/02/2012", "2012-09-02".
 //  3. Anything unrecognized is returned as-is rather than dropped, so a
 //     typo'd or unusual entry is still visible (and fixable) rather than lost.
+
 function normalizeDob(raw) {
   const str = String(raw ?? "").trim();
   if (str === "") return "";
@@ -63,6 +66,57 @@ function normalizeDob(raw) {
   if (m) return `${parseInt(m[2],10)}/${parseInt(m[3],10)}/${m[1]}`;
 
   return str; // unrecognized format — show as-is rather than discard
+}
+
+export function parseWithMergedHeaders(sheet) {
+  const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false });
+  const idPatterns = /student.?id|full.?name|student.?name|^name$|^id$/i;
+  const subPatterns = /^score$|^behaviour$|^behavior$|^type$/i;
+
+  let subRowIdx = -1;
+  for (let i = 0; i < Math.min(5, raw.length); i++) {
+    const row = raw[i] || [];
+    const subCount = row.filter(cell => subPatterns.test(String(cell).trim())).length;
+    if (subCount >= 2) { subRowIdx = i; break; }
+  }
+
+  if (subRowIdx === -1) {
+    const headerRow = (() => {
+      for (let i = 0; i < Math.min(5, raw.length); i++) {
+        const row = raw[i] || [];
+        const matchCount = row.filter(cell => idPatterns.test(String(cell).trim())).length;
+        if (matchCount >= 2) return i;
+      }
+      return 0;
+    })();
+    return XLSX.utils.sheet_to_json(sheet, { defval: "", range: headerRow });
+  }
+
+  const groupRow = raw[subRowIdx - 1] || [];
+  const subRow = raw[subRowIdx] || [];
+  const compoundHeaders = [];
+  let lastGroup = "";
+
+  for (let c = 0; c < subRow.length; c++) {
+    const subLabel = String(subRow[c] || "").trim();
+    const groupLabel = String(groupRow[c] || "").trim();
+    if (groupLabel) lastGroup = groupLabel;
+    if (subPatterns.test(subLabel)) {
+      const normalized = /behavior/i.test(subLabel) ? "Behaviour" : subLabel;
+      compoundHeaders.push(`${lastGroup}_${normalized}`);
+    } else {
+      compoundHeaders.push(subLabel || `Col${c}`);
+    }
+  }
+
+  const dataRows = raw.slice(subRowIdx + 1);
+  return dataRows
+    .filter(row => row.some(cell => String(cell).trim() !== ""))
+    .map(row => {
+      const obj = {};
+      compoundHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ""; });
+      return obj;
+    });
 }
 
 function parseWide(rows, meta) {
@@ -394,12 +448,15 @@ function dedupeAwards(list, keyFn) {
 // Returns a Map keyed by Student_ID (preferred) or normalised name (fallback).
 export function parseAttendanceData(rows) {
   const byId = new Map();
+  // byName maps normalized-name -> array of { grade: normalizedGrade, att }
   const byName = new Map();
 
   for (const row of rows) {
     const id = v(row,"studentid","id").replace(/\s/g,"");
     const fullName = v(row,"fullname","name","studentname");
     const calledName = v(row,"calledname","nickname","nick");
+    const gradeRaw = v(row,"grade","class","yeargroup");
+    const gradeNorm = normGrade(gradeRaw);
 
     const att = {
       totalDays:     intAttVal(v(row,"totaldays","schooldays","totalnumberofschooldays")),
@@ -414,14 +471,23 @@ export function parseAttendanceData(rows) {
     if (!hasData) continue;
 
     if (id) byId.set(id.toUpperCase(), att);
-    if (fullName) byName.set(normName(fullName), att);
-    if (calledName) byName.set(normName(calledName), att);
+
+    if (fullName) {
+      const k = normName(fullName);
+      if (!byName.has(k)) byName.set(k, []);
+      byName.get(k).push({ grade: gradeNorm, att });
+    }
+    if (calledName) {
+      const k = normName(calledName);
+      if (!byName.has(k)) byName.set(k, []);
+      byName.get(k).push({ grade: gradeNorm, att });
+    }
   }
   return { byId, byName };
 }
 
 // Merges parsed attendance data into the student array.
-// Joins by Student_ID first (exact), then falls back to name matching.
+// Joins by Student_ID first (exact), then falls back to name+grade matching.
 // Individual student's existing attendance values take priority over the
 // imported data (so manual edits in the app are never overwritten).
 export function mergeAttendanceData(students, attendanceMap) {
@@ -429,13 +495,26 @@ export function mergeAttendanceData(students, attendanceMap) {
   return students.map(s => {
     const existing = s.attendance || {};
     // Try ID match first
-    const id = (s.studentId || "").replace(/\s/g,"").toUpperCase();
+    const id = (s.id || s.studentId || "").replace(/\s/g,"").toUpperCase();
     let imported = (id && byId.get(id)) || null;
-    // Fall back to name match
+    // Fall back to name match (prefer exact nameKey or calledNameKey),
+    // but if multiple candidate rows exist, prefer one whose grade matches.
     if (!imported) {
       const nameKey = normName(s.nickName || s.name || "");
       const fullKey = normName(s.name || "");
-      imported = byName.get(nameKey) || byName.get(fullKey) || null;
+      const candidates = (byName.get(nameKey) || []).concat(byName.get(fullKey) || []);
+      if (candidates.length > 0) {
+        const studentGrade = normGrade(s.grade);
+        // Prefer candidate with matching grade (or blank grade in source)
+        let match = null;
+        if (studentGrade) {
+          match = candidates.find(c => !c.grade || c.grade === studentGrade);
+        }
+        if (!match) match = candidates[0];
+        imported = match ? match.att : null;
+      } else {
+        imported = null;
+      }
     }
     if (!imported) return s;
     // Merge: imported values fill empty slots; existing (manually entered) values win
