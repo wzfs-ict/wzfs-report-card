@@ -291,4 +291,3 @@ export default function ReportCard({ student, signatures }) {
     </div>
   );
 }
-
