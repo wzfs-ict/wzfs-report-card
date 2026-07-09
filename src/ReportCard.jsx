@@ -213,23 +213,16 @@ function Page1({ student, signatures }) {
   );
 }
 
-function Page2({ student, signatures }) {
+function Page2({ student }) {
   const sp    = student.servicePoints || [];
   const certs = student.certificates  || [];
 
-  // Switch to a 2-column grid for certs when there are more than 16 —
-  // this alone fits the typical 25-cert case without any scaling needed.
-  const wideMode = certs.length > 16;
-
-  // Dynamic scale: shrinks row padding + font when even 2-column isn't enough.
-  // effectiveRows = SP rows + cert rows in current layout (1 or 2 cols).
-  const effectiveRows = sp.length + Math.ceil(certs.length / (wideMode ? 2 : 1));
+  // Always use the 2-column grid layout for certificates to save vertical space
+  const effectiveRows = sp.length + Math.ceil(certs.length / 2);
   
-  // Applies a more aggressive scaling explicitly for students with >9 certificates 
-  // to compensate for wrapped text height, while leaving <9 completely unaffected.
-  const p2Scale = certs.length > 9 
-    ? Math.min(1, Math.max(0.62, 12 / (sp.length + certs.length)))
-    : Math.min(1, Math.max(0.62, 20 / Math.max(20, effectiveRows)));
+  // Adjusted scaling: Since we removed signatures and enforced 2-column layout,
+  // we have significantly more space. This scales gently if there's a massive amount.
+  const p2Scale = Math.min(1, Math.max(0.65, 20 / Math.max(20, effectiveRows)));
 
   return (
     <div className="rc-page" style={{"--p2-scale": p2Scale}}>
@@ -264,22 +257,14 @@ function Page2({ student, signatures }) {
 
         <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "calc(6mm * var(--p2-scale,1))" : "0"}}>Certificates</div>
         {certs.length > 0 ? (
-          wideMode ? (
-            // 2-column grid — fits 2× more entries at the same row height
-            <div className="rc-p2-certs-2col">
-              {certs.map((c,i) => (
-                <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
-                  <span className="rc-p2-cert-name">{c.name}</span>
-                  <span className="rc-p2-cert-type">{c.type}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <table className="rc-p2-table">
-              <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
-              <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
-            </table>
-          )
+          <div className="rc-p2-certs-2col">
+            {certs.map((c,i) => (
+              <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
+                <span className="rc-p2-cert-name">{c.name}</span>
+                <span className="rc-p2-cert-type">{c.type}</span>
+              </div>
+            ))}
+          </div>
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
 
         {p2Scale >= 0.78 && <div className="rc-p2-spacer"/>}
@@ -288,7 +273,8 @@ function Page2({ student, signatures }) {
         )}
       </div>
 
-      <RCSignatures student={student} signatures={signatures}/>
+      {/* Signatures removed from Page 2 to maximize space for certificates */}
+      
       <div className="rc-rule"/>
       <AccreditationStrip/>
       <RCAddress pageNum="2"/>
@@ -301,7 +287,7 @@ export default function ReportCard({ student, signatures }) {
     <div className="rc-wrapper">
       <Page1 student={student} signatures={signatures}/>
       <div className="rc-page-break"/>
-      <Page2 student={student} signatures={signatures}/>
+      <Page2 student={student}/>
     </div>
   );
 }
