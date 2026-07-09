@@ -358,36 +358,39 @@ function normGrade(g) {
 
 // Builds a lookup from normalized-name -> array of awards, so matching is
 // case/spacing/punctuation insensitive instead of requiring exact equality.
-function buildNormalizedAwardsIndex(awardsMap) {
-  const index = {};
-  const addEntry = (key, awards) => {
+function buildAwardsIndices(awardsMap) {
+  const nameIndex = {};
+  const compoundIndex = {};
+  const addTo = (map, key, award) => {
     if (!key) return;
-    if (!index[key]) index[key] = [];
-    index[key].push(...awards);
+    if (!map[key]) map[key] = [];
+    map[key].push(award);
   };
+
   for (const [rawName, awards] of Object.entries(awardsMap)) {
     const nameNorm = normName(rawName);
     const nameCanon = canonicalName(rawName);
-    addEntry(nameNorm, awards);
-    if (nameCanon && nameCanon !== nameNorm) addEntry(nameCanon, awards);
-
     const pm = rawName.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
-    if (pm) {
-      const baseNorm = normName(pm[1]);
-      const baseCanon = canonicalName(pm[1]);
-      const callNorm = normName(pm[2]);
-      const callCanon = canonicalName(pm[2]);
-      addEntry(baseNorm, awards);
-      if (baseCanon && baseCanon !== baseNorm) addEntry(baseCanon, awards);
-      addEntry(callNorm, awards);
-      if (callCanon && callCanon !== callNorm) addEntry(callCanon, awards);
+    const baseNorm = pm ? normName(pm[1]) : null;
+    const baseCanon = pm ? canonicalName(pm[1]) : null;
+    const callNorm = pm ? normName(pm[2]) : null;
+    const callCanon = pm ? canonicalName(pm[2]) : null;
+    const nameKeys = [nameNorm, nameCanon, baseNorm, baseCanon, callNorm, callCanon]
+      .filter((k, i, arr) => k && arr.indexOf(k) === i);
+
+    for (const award of awards) {
+      const g = normGrade(award.grade);
+      for (const k of nameKeys) {
+        addTo(nameIndex, k, award);
+        if (g) addTo(compoundIndex, `${g}|${k}`, award);
+      }
     }
   }
-  return index;
+  return { nameIndex, compoundIndex };
 }
 
 export function mergeStudentData(students, awardsMap) {
-  const normIndex = buildNormalizedAwardsIndex(awardsMap);
+  const { nameIndex, compoundIndex } = buildAwardsIndices(awardsMap);
 
   return students.map(s => {
     const studentGrade = normGrade(s.grade);
@@ -404,33 +407,43 @@ export function mergeStudentData(students, awardsMap) {
     let awards = [];
     let matchedByFirstNameOnly = false;
 
-    if (nickNameNorm && normIndex[nickNameNorm]) {
-      // Called name match (most specific — e.g. "Noah")
-      awards = normIndex[nickNameNorm];
-    } else if (nickNameCanon && normIndex[nickNameCanon]) {
-      awards = normIndex[nickNameCanon];
-    } else if (normIndex[fullNameNorm]) {
-      // Full name exact match (e.g. "Hee Im")
-      awards = normIndex[fullNameNorm];
-    } else if (fullNameCanon && normIndex[fullNameCanon]) {
-      awards = normIndex[fullNameCanon];
-    } else if (normIndex[reversedNameNorm]) {
-      // Reversed order match (Korean family-name-first → Western order)
-      awards = normIndex[reversedNameNorm];
-    } else if (nickNameNorm && lastNameNorm && normIndex[`${nickNameNorm} ${lastNameNorm}`]) {
-      // Called name + family name (e.g. awards file has "Noah Kim" but called name is "Noah")
-      awards = normIndex[`${nickNameNorm} ${lastNameNorm}`];
-    } else if (firstNameNorm && normIndex[firstNameNorm]) {
-      // Given name only — ambiguous, grade filter below will disambiguate
-      awards = normIndex[firstNameNorm];
-      matchedByFirstNameOnly = true;
-    } else if (firstNameCanon && normIndex[firstNameCanon]) {
-      awards = normIndex[firstNameCanon];
-      matchedByFirstNameOnly = true;
-    } else if (lastNameNorm && normIndex[lastNameNorm] && nameWords.length > 1) {
-      // Family name only as last resort
-      awards = normIndex[lastNameNorm];
-      matchedByFirstNameOnly = true;
+    if (studentGrade) {
+      const tryCompound = (nameKey) => nameKey && compoundIndex[`${studentGrade}|${nameKey}`];
+      awards = tryCompound(nickNameNorm) || tryCompound(nickNameCanon)
+             || tryCompound(fullNameNorm) || tryCompound(fullNameCanon)
+             || tryCompound(reversedNameNorm) || [];
+    }
+
+    if (awards.length === 0) {
+      if (nickNameNorm && nameIndex[nickNameNorm]) {
+        awards = nameIndex[nickNameNorm];
+      } else if (nickNameCanon && nameIndex[nickNameCanon]) {
+        awards = nameIndex[nickNameCanon];
+      } else if (nameIndex[fullNameNorm]) {
+        awards = nameIndex[fullNameNorm];
+      } else if (fullNameCanon && nameIndex[fullNameCanon]) {
+        awards = nameIndex[fullNameCanon];
+      } else if (nameIndex[reversedNameNorm]) {
+        awards = nameIndex[reversedNameNorm];
+      } else if (nickNameNorm && lastNameNorm && nameIndex[`${nickNameNorm} ${lastNameNorm}`]) {
+        awards = nameIndex[`${nickNameNorm} ${lastNameNorm}`];
+      } else if (firstNameNorm && nameIndex[firstNameNorm]) {
+        awards = nameIndex[firstNameNorm];
+        matchedByFirstNameOnly = true;
+      } else if (firstNameCanon && nameIndex[firstNameCanon]) {
+        awards = nameIndex[firstNameCanon];
+        matchedByFirstNameOnly = true;
+      } else if (lastNameNorm && nameIndex[lastNameNorm] && nameWords.length > 1) {
+        awards = nameIndex[lastNameNorm];
+        matchedByFirstNameOnly = true;
+      }
+
+      if (studentGrade && awards.length > 0) {
+        const hasGradeInfo = awards.some(a => String(a.grade || '').trim() !== '');
+        if (hasGradeInfo) {
+          awards = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
+        }
+      }
     }
 
     // Always narrow by grade when the award row carries grade info — this
