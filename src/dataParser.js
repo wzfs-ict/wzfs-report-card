@@ -439,8 +439,10 @@ export function mergeStudentData(students, awardsMap) {
     // The guard `gradeFiltered.length > 0` ensures we never accidentally drop
     // all awards on sheets that omit the grade column entirely.
     if (studentGrade && awards.length > 0) {
-      const gradeFiltered = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
-      if (gradeFiltered.length > 0) awards = gradeFiltered;
+      const hasGradeInfo = awards.some(a => String(a.grade || '').trim() !== '');
+      if (hasGradeInfo) {
+        awards = awards.filter(a => !a.grade || normGrade(a.grade) === studentGrade);
+      }
     }
 
     return {
