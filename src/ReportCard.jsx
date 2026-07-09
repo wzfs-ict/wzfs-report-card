@@ -305,6 +305,4 @@ export default function ReportCard({ student, signatures }) {
     </div>
   );
 }
-```eof
 
-By using a more aggressive mathematical scale division (`12 / (sp.length + certs.length)`) that is exclusively applied for `certs.length > 9`, the page is safely shrunk down to prevent elements from bleeding into the next page, accounting correctly for long texts that wrap across multiple lines. Students with 9 or fewer certificates are evaluated exactly the same way they were previously.
