@@ -213,14 +213,26 @@ function Page1({ student, signatures }) {
   );
 }
 
-function Page2({ student, signatures }) {
+function Page2({ student }) {
   const sp    = student.servicePoints || [];
   const certs = student.certificates  || [];
 
-  // Switch to a 2-column grid for certs when there are more than 16 —
-  // this alone fits the typical 25-cert case without any scaling needed.
+  // Cap Service Points display at 8 entries (per spec) — if there are more,
+  // show the first 8 and note how many were omitted rather than overflowing.
+  const SP_CAP = 8;
+  const spShown = sp.slice(0, SP_CAP);
+  const spHidden = Math.max(0, sp.length - SP_CAP);
+  // More than 4 entries -> two-column layout (Activity/Points × 2)
+  const spTwoCol = spShown.length > 4;
+  const spPairs = spTwoCol
+    ? Array.from({ length: Math.ceil(spShown.length / 2) }, (_, i) => [spShown[i*2], spShown[i*2+1]])
+    : null;
+
+  // Certificates: 2-column grid once there are more than 16 — comfortably
+  // covers the ~25-certificate target case without needing to shrink text.
   const wideMode = certs.length > 16;
 
+<<<<<<< HEAD
   // Dynamic scale: shrinks row padding + font when even 2-column isn't enough.
   // effectiveRows = SP rows + cert rows in current layout (1 or 2 cols).
   const effectiveRows = sp.length + Math.ceil(certs.length / (wideMode ? 2 : 1));
@@ -230,9 +242,20 @@ function Page2({ student, signatures }) {
   const p2Scale = certs.length > 9 
     ? Math.min(1, Math.max(0.62, 12 / (sp.length + certs.length)))
     : Math.min(1, Math.max(0.62, 20 / Math.max(20, effectiveRows)));
+=======
+  // Padding-only density control — NEVER touches font-size (per spec: fixed,
+  // readable text always). Only cell/row/quote padding shrinks under heavy
+  // content, in the order: table padding -> quote padding.
+  const spRowUnits = spTwoCol ? Math.ceil(spShown.length / 2) : spShown.length;
+  const certRowUnits = wideMode ? Math.ceil(certs.length / 2) : certs.length;
+  const effectiveRows = spRowUnits + certRowUnits;
+  const padScale = Math.min(1, Math.max(0.55, 16 / Math.max(16, effectiveRows)));
+  // Quote only shown when there's still comfortable room left.
+  const showQuote = padScale >= 0.72;
+>>>>>>> da760e1299f2997fad7e49b2569357c2f6a0f7d2
 
   return (
-    <div className="rc-page" style={{"--p2-scale": p2Scale}}>
+    <div className="rc-page" style={{"--p2-pad": padScale}}>
       <RCHeader schoolYear={student.schoolYear}/>
       <div className="rc-rule"/>
       <div className="rc-p2-student-strip">
@@ -253,42 +276,63 @@ function Page2({ student, signatures }) {
         {sp.length > 0 && (
           <>
             <div className="rc-p2-section-title">Service Points</div>
-            <table className="rc-p2-table">
-              <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
-              <tbody>
-                {sp.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
-              </tbody>
-            </table>
+            {spTwoCol ? (
+              <table className="rc-p2-table rc-p2-table-2col">
+                <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+                <tbody>
+                  {spPairs.map((pair,i)=>(
+                    <tr key={i}>
+                      <td>{pair[0]?.name}</td><td className="rc-p2-num">{pair[0]?.points}</td>
+                      <td>{pair[1]?.name||""}</td><td className="rc-p2-num">{pair[1]?.points??""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="rc-p2-table">
+                <thead><tr><th>Activity / Service</th><th className="rc-p2-num">Points</th></tr></thead>
+                <tbody>
+                  {spShown.map((s,i)=><tr key={i}><td>{s.name}</td><td className="rc-p2-num">{s.points}</td></tr>)}
+                </tbody>
+              </table>
+            )}
+            <div className="rc-p2-terminator">
+              {spHidden > 0
+                ? `+${spHidden} additional service point ${spHidden===1?"entry":"entries"} not shown`
+                : <>xx nothing follows &nbsp;&nbsp; xx</>}
+            </div>
           </>
         )}
 
-        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "calc(6mm * var(--p2-scale,1))" : "0"}}>Certificates</div>
+        <div className="rc-p2-section-title" style={{marginTop: sp.length > 0 ? "calc(5mm * var(--p2-pad,1))" : "0"}}>Certificates</div>
         {certs.length > 0 ? (
-          wideMode ? (
-            // 2-column grid — fits 2× more entries at the same row height
-            <div className="rc-p2-certs-2col">
-              {certs.map((c,i) => (
-                <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
-                  <span className="rc-p2-cert-name">{c.name}</span>
-                  <span className="rc-p2-cert-type">{c.type}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <table className="rc-p2-table">
-              <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
-              <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
-            </table>
-          )
+          <>
+            {wideMode ? (
+              // 2-column grid — fits 2× more entries at the same row height
+              <div className="rc-p2-certs-2col">
+                {certs.map((c,i) => (
+                  <div key={i} className={`rc-p2-cert-cell${i%2===1?" rc-p2-cert-even":""}`}>
+                    <span className="rc-p2-cert-name">{c.name}</span>
+                    <span className="rc-p2-cert-type">{c.type}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <table className="rc-p2-table">
+                <thead><tr><th>Certificate / Award</th><th>Type</th></tr></thead>
+                <tbody>{certs.map((c,i)=><tr key={i}><td>{c.name}</td><td>{c.type}</td></tr>)}</tbody>
+              </table>
+            )}
+            <div className="rc-p2-terminator">xx nothing follows &nbsp;&nbsp; xx</div>
+          </>
         ) : <div className="rc-p2-placeholder">C &nbsp; e &nbsp; r &nbsp; t &nbsp; i &nbsp; f &nbsp; i &nbsp; c &nbsp; a &nbsp; t &nbsp; e &nbsp; s</div>}
 
-        {p2Scale >= 0.78 && <div className="rc-p2-spacer"/>}
-        {p2Scale >= 0.78 && (
+        {showQuote && <div className="rc-p2-spacer"/>}
+        {showQuote && (
           <div className="rc-p2-quote">"Use better Grades to build better Character."</div>
         )}
       </div>
 
-      <RCSignatures student={student} signatures={signatures}/>
       <div className="rc-rule"/>
       <AccreditationStrip/>
       <RCAddress pageNum="2"/>
@@ -301,7 +345,7 @@ export default function ReportCard({ student, signatures }) {
     <div className="rc-wrapper">
       <Page1 student={student} signatures={signatures}/>
       <div className="rc-page-break"/>
-      <Page2 student={student} signatures={signatures}/>
+      <Page2 student={student}/>
     </div>
   );
 }
