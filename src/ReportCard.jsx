@@ -36,7 +36,7 @@ function getRowScale(totalSubjects) {
   if (totalSubjects <= 6) return 1.6;
   if (totalSubjects <= 9) return 1.3;
   if (totalSubjects <= 12) return 1.1;
-  return 1; // 13+ subjects: standard compact size, as before
+  return 1; // 13+ subjects: standard compact size, as before 
 }
 
 function RCHeader({ schoolYear }) {
@@ -145,7 +145,10 @@ function RCSignatures({ student, signatures }) {
   const gradeKey = gradeNum ? gradeDisplayKey(gradeNum) : null; // "G7", "ZSA", null
   // Manual override (teacher signed in Manage Signatures) takes priority;
   // otherwise fall back to the preloaded bundled signature for that grade.
-  const advisorSig = (gradeKey && signatures?.[gradeKey]) || (gradeNum && gradeSignatureMap[gradeNum]) || null;
+  const advisorSig = (gradeKey && signatures?.[gradeKey])
+    || signatures?.[student.advisor]
+    || (gradeNum && gradeSignatureMap[gradeNum])
+    || null;
   const principalName = student.principal || "Mr. Arsenio Sumeg-ang";
   // Principal: localStorage override → bundled principal.png → nothing
   const principalSig = signatures?.["principal"] || gradeSignatureMap["principal"] || null;
