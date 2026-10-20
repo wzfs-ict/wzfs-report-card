@@ -1,5 +1,5 @@
 import { normGradeNum, gradeDisplayKey } from "./gradeAdvisors";
-import { gradeSignatureMap } from "./gradeSignatures";
+import { gradeSignatureMap, signatureByAdvisor } from "./gradeSignatures";
 
 function SubjectTable({ title, subjects, rowScale }) {
   const rows = [...(subjects||[])];
@@ -145,9 +145,13 @@ function RCSignatures({ student, signatures }) {
   const gradeKey = gradeNum ? gradeDisplayKey(gradeNum) : null; // "G7", "ZSA", null
   // Manual override (teacher signed in Manage Signatures) takes priority;
   // otherwise fall back to the preloaded bundled signature for that grade.
-  const advisorSig = (gradeKey && signatures?.[gradeKey])
+  // Order: a signature saved in Manage Signatures for this exact grade (e.g. "G9-1") or grade key,
+  // then one saved under the advisor's name, then the bundled image that belongs to this advisor.
+  // Never the bundled image of whoever advised this grade last year.
+  const advisorSig = (student.grade && signatures?.[student.grade])
+    || (gradeKey && signatures?.[gradeKey])
     || signatures?.[student.advisor]
-    || (gradeNum && gradeSignatureMap[gradeNum])
+    || signatureByAdvisor(student.advisor)
     || null;
   const principalName = student.principal || "Mr. Arsenio Sumeg-ang";
   // Principal: localStorage override → bundled principal.png → nothing

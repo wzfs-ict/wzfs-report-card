@@ -313,6 +313,8 @@ export function parseAwardsData(rows) {
     const effectiveRecognition = achievementRx.test(recognition.trim()) ? "Certificate of Recognition" : recognition;
 
     map[key].push({
+      // Awards exported from WZFS Reporting carry the Student ID: matched exactly, no name guessing.
+      studentId: v(row,"studentid"),
       type: effectiveRecognition,
       name: awardName,
       points: effectivePoints,
@@ -390,7 +392,17 @@ function buildAwardsIndices(awardsMap) {
 }
 
 export function mergeStudentData(students, awardsMap) {
-  const { nameIndex, compoundIndex } = buildAwardsIndices(awardsMap);
+  // Awards with a Student ID go only to that student. Name matching (below) is used just for
+  // awards without an ID, i.e. the old hand-typed award workbooks.
+  const byId = {};
+  const withoutId = {};
+  for (const [name, list] of Object.entries(awardsMap || {})) {
+    for (const a of list) {
+      if (a.studentId) (byId[a.studentId] ||= []).push(a);
+      else (withoutId[name] ||= []).push(a);
+    }
+  }
+  const { nameIndex, compoundIndex } = buildAwardsIndices(withoutId);
 
   return students.map(s => {
     const studentGrade = normGrade(s.grade);
@@ -445,6 +457,9 @@ export function mergeStudentData(students, awardsMap) {
         }
       }
     }
+
+    // Exact matches by Student ID first (WZFS Reporting exports), then any name-matched legacy awards.
+    awards = [...((s.id && byId[s.id]) || []), ...awards];
 
     return {
       ...s,

@@ -9,6 +9,29 @@ import SignatureManager, { loadSignatures } from "./SignatureManager";
 import LoginGate, { isAuthenticated } from "./LoginGate";
 import { parseMarksData, parseAwardsData, mergeStudentData, parseAttendanceData, mergeAttendanceData, parseWithMergedHeaders } from "./dataParser";
 
+const HANDOFF_KEY = "wzfs_reporting_handoff_v1";
+
+// Marks + awards + attendance → the student objects the report card renders.
+function buildStudents(marksRaw, awardsRaw, attendanceRaw, meta) {
+  const parsed = parseMarksData(marksRaw, meta);
+  const awards = awardsRaw ? parseAwardsData(awardsRaw) : {};
+  let merged = mergeStudentData(parsed, awards).map(s => ({
+    ...s,
+    grade: s.grade || meta.grade,
+    advisor: s.advisor || meta.advisor,
+    principal: s.principal || meta.principal,
+    department: s.department || meta.department,
+    gradingPeriod: s.gradingPeriod || meta.gradingPeriod,
+    schoolYear: meta.schoolYear,
+  }));
+  // Merge attendance data when an attendance file was uploaded
+  if (attendanceRaw) {
+    const attMap = parseAttendanceData(attendanceRaw);
+    merged = mergeAttendanceData(merged, attMap);
+  }
+  return merged;
+}
+
 export default function App() {
   const [authed, setAuthed] = useState(isAuthenticated);
   const [marksRaw, setMarksRaw] = useState(null);
@@ -26,6 +49,24 @@ export default function App() {
   });
 
   useEffect(() => { setSignatures(loadSignatures()); }, []);
+
+  // Hand-off from the WZFS Reporting portal (same site): the Admin team clicks "Generate" there and
+  // the marks, awards and attendance arrive here directly — no files downloaded or uploaded.
+  // The payload is read once and deleted straight away, so student data doesn't linger in the browser.
+  const [handoffNote, setHandoffNote] = useState("");
+  useEffect(() => {
+    let h = null;
+    try { h = JSON.parse(localStorage.getItem(HANDOFF_KEY) || "null"); localStorage.removeItem(HANDOFF_KEY); } catch { h = null; }
+    if (!h || !Array.isArray(h.marks) || Date.now() - (h.createdAt || 0) > 10 * 60 * 1000) return;
+    const m = { ...meta, ...(h.meta || {}) };
+    setMeta(m); setMarksRaw(h.marks); setAwardsRaw(h.awards || null); setAttendanceRaw(h.attendance || null);
+    try {
+      const merged = buildStudents(h.marks, h.awards, h.attendance, m);
+      if (!merged.length) { setErrors(["The portal sent no students for this grade."]); setAuthed(true); return; }
+      setStudents(merged); setSelectedIndex(0); setStep("preview"); setAuthed(true);
+      setHandoffNote(`${m.grade} · ${merged.length} students · from WZFS Reporting${h.by ? ` (${h.by})` : ""}`);
+    } catch (err) { setErrors([err.message || "Could not read the data from the portal."]); setAuthed(true); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refreshSignatures = useCallback(() => {
     setSignatures(loadSignatures());
@@ -83,22 +124,7 @@ export default function App() {
   const handleGenerate = () => {
     if (!marksRaw) { setErrors(["Please upload the marks file first."]); return; }
     try {
-      const parsed = parseMarksData(marksRaw, meta);
-      const awards = awardsRaw ? parseAwardsData(awardsRaw) : {};
-      let merged = mergeStudentData(parsed, awards).map(s => ({
-        ...s,
-        grade: s.grade || meta.grade,
-        advisor: s.advisor || meta.advisor,
-        principal: s.principal || meta.principal,
-        department: s.department || meta.department,
-        gradingPeriod: s.gradingPeriod || meta.gradingPeriod,
-        schoolYear: meta.schoolYear,
-      }));
-      // Merge attendance data when an attendance file was uploaded
-      if (attendanceRaw) {
-        const attMap = parseAttendanceData(attendanceRaw);
-        merged = mergeAttendanceData(merged, attMap);
-      }
+      const merged = buildStudents(marksRaw, awardsRaw, attendanceRaw, meta);
       if (!merged.length) { setErrors(["No students found — check your file's column headers."]); return; }
       setStudents(merged);
       setSelectedIndex(0);
@@ -138,7 +164,7 @@ export default function App() {
         <div className="preview-toolbar no-print">
           <div className="tl">
             <button className="btn-back" onClick={()=>{setStep("upload");setStudents([]);}}>← Upload</button>
-            <span className="stu-count">{students.length} students</span>
+            <span className="stu-count">{handoffNote || `${students.length} students`}</span>
           </div>
           <div className="tc">
             <StudentNav students={students} selectedIndex={selectedIndex} onSelect={setSelectedIndex}/>
